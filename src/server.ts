@@ -20,7 +20,7 @@ connectDB();
 startCronJobs();
 const app = express();
 
-app.use(cors(/* corsConfig */))
+app.use(cors(corsConfig))
 
 // Logging
 app.use(morgan('dev'))
