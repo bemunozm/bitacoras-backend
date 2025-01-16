@@ -3,8 +3,7 @@ import prisma from '../config/db';
 import { hashPassword } from '../utils/auth';
 import { generateToken } from '../utils/token';
 import { AuthEmail } from '../emails/AuthEmail';
-import path from 'path';
-import fs from 'fs';
+import { v2 as cloudinary } from 'cloudinary';
 
 export class UserController {
 
@@ -25,7 +24,7 @@ export class UserController {
                     email,
                     phone,
                     password: hashedPassword,
-                    profile_image: req.file ? '/uploads/images/' + req.file.filename : null,
+                    profile_image: req.file ? req.file.path : null,
                     roles: {
                         createMany: {
                             data: roles.map(role => ({
@@ -121,6 +120,7 @@ export class UserController {
     
         try {
             const { run, name, job_position, email, phone, roles } = req.body;
+            console.log(req.file)
     
             // Obtener roles actuales del usuario
             const currentRoles = await prisma.role_user.findMany({
@@ -180,20 +180,17 @@ export class UserController {
 
                 //Si el usuario ya tiene una imagen de perfil, la eliminamos
                 if (currentUser.profile_image) {
-                    const filePath = path.join(__dirname,'../../', req.user.profile_image);
-                    fs.unlink(filePath, (err) => {
-                        if (err) {
-                            console.error(`Error al eliminar el archivo: ${filePath}`, err);
-                        }
-                    });
+                    await cloudinary.uploader.destroy(currentUser.profile_image.split('/').pop().split('.')[0]);
+
                 }
 
+                console.log(req.file.path)
                 await prisma.users.update({
                     where: {
                         id: +id
                     },
                     data: {
-                        profile_image: '/uploads/images/' + req.file.filename
+                        profile_image: req.file ? req.file.path : null
                     }
                 })
             }

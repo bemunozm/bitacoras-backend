@@ -1,6 +1,16 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import multerStorageCloudinary from 'multer-storage-cloudinary';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+
+    api_key: process.env.CLOUDINARY_API_KEY,
+
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+
+});
 
 declare global {
     namespace Express {
@@ -12,19 +22,11 @@ declare global {
 }
 
 // Configuración de almacenamiento de multer
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const uploadPath = path.join(__dirname, '../../uploads/images');
-
-        // Verifica si la carpeta existe, si no, la crea
-        fs.mkdirSync(uploadPath, { recursive: true });
-
-        cb(null, uploadPath);
+const storage = multerStorageCloudinary({
+    cloudinary: cloudinary,
+    params: {
+        public_id: (req, file) => file.originalname.replace(/\.[^/.]+$/, ""), // Elimina la extensión del archivo
     },
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`); // Nombre de archivo único
-    }
 });
 
 // Filtro de archivos para validar tipo de archivo

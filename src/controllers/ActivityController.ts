@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 import prisma from '../config/db';
-import fs from 'fs';
-import path from 'path';
+
+import {v2 as cloudinary} from 'cloudinary';
 
 export class ActivityController {
 
@@ -52,7 +52,7 @@ export class ActivityController {
             if (files && files.length > 0) {
 
                 const attachmentsData = files.map((file) => ({
-                    image: `/uploads/images/${file.filename}`,
+                    image: file.path,
                     activity_id: activity.id,
                 }));
 
@@ -185,12 +185,7 @@ export class ActivityController {
                     });
 
                     existingAttachments.forEach((attachment) => {
-                        const filePath = path.join(__dirname,'../../', attachment.image);
-                        fs.unlink(filePath, (err) => {
-                            if (err) {
-                                console.error(`Error al eliminar el archivo: ${filePath}`, err);
-                            }
-                        });
+                        cloudinary.uploader.destroy(attachment.image.split('/').pop().split('.')[0]);
                     });
                 }
             }
@@ -221,12 +216,7 @@ export class ActivityController {
                     });
 
                     attachmentsToDelete.forEach((attachment) => {
-                        const filePath = path.join(__dirname,'../../', attachment.image);
-                        fs.unlink(filePath, (err) => {
-                            if (err) {
-                                console.error(`Error al eliminar el archivo: ${filePath}`, err);
-                            }
-                        });
+                        cloudinary.uploader.destroy(attachment.image.split('/').pop().split('.')[0]);
                     });
                 }
             }
@@ -236,7 +226,7 @@ export class ActivityController {
             // Manejar archivos adjuntos
             if (files && files.length > 0) {
                 const attachmentsData = files.map((file) => ({
-                    image: `/uploads/images/${file.filename}`,
+                    image: file.path,
                     activity_id: Number(id),
                 }));
 
@@ -280,12 +270,7 @@ export class ActivityController {
                 });
 
                 attachments.forEach((attachment) => {
-                    const filePath = path.join(__dirname,'../../', attachment.image);
-                    fs.unlink(filePath, (err) => {
-                        if (err) {
-                            console.error(`Error al eliminar el archivo: ${filePath}`, err);
-                        }
-                    });
+                    cloudinary.uploader.destroy(attachment.image.split('/').pop().split('.')[0]);
                 });
             }
 

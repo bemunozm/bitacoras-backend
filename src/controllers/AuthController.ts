@@ -4,8 +4,7 @@ import { checkPassword, hashPassword } from '../utils/auth';
 import { generateToken } from '../utils/token';
 import { AuthEmail } from '../emails/AuthEmail';
 import { generateJWT } from '../utils/jwt';
-import path from 'path';
-import fs from 'fs';
+import {v2 as cloudinary } from 'cloudinary';
 
 export class AuthController {
 
@@ -359,12 +358,7 @@ export class AuthController {
 
                 //Si el usuario ya tiene una imagen de perfil, la eliminamos
                 if (req.user.profile_image) {
-                    const filePath = path.join(__dirname,'../../', req.user.profile_image);
-                    fs.unlink(filePath, (err) => {
-                        if (err) {
-                            console.error(`Error al eliminar el archivo: ${filePath}`, err);
-                        }
-                    });
+                    cloudinary.uploader.destroy(req.user.profile_image.split('/').pop().split('.')[0]);
                 }
 
                const updatedUser = await prisma.users.update({
@@ -372,7 +366,7 @@ export class AuthController {
                         id: req.user.id
                     },
                     data: {
-                        profile_image: '/uploads/images/' + req.file.filename
+                        profile_image: req.file ? req.file.path : null
                     }
                 })
 
