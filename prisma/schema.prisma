@@ -1,0 +1,152 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model tokens {
+  id        Int    @id @default(autoincrement())
+  value     Int
+  user_id   Int
+  created_at DateTime @default(now())
+  expires_at   DateTime
+  users     users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model users {
+  id        Int   @id @default(autoincrement())
+  name      String
+  run       String   @unique
+  job_position String?
+  email     String   @unique
+  phone     String?
+  password  String
+  profile_image String?
+  is_confirmed Boolean @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  roles     role_user[] 
+  residences residence_user[]
+  bitacoras  bitacoras[]
+  tokens    tokens[]
+  programs  programs[]
+}
+
+model role_user {
+  id        Int   @id @default(autoincrement())
+  role_id   Int
+  user_id   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  users      users  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  roles      roles  @relation(fields: [role_id], references: [id], onDelete: Cascade)
+}
+
+model roles {
+  id        Int   @id @default(autoincrement())
+  name      String
+  description String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  users     role_user[]
+}
+
+model residence_user {
+  id           Int   @id @default(autoincrement())
+  residence_id Int
+  user_id      Int
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  users         users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  residences    residences @relation(fields: [residence_id], references: [id], onDelete: Cascade)
+}
+
+model residences {
+  id        Int   @id @default(autoincrement())
+  name      String
+  address   String
+  capacity  Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  users     residence_user[]
+  programs program_residence[]
+}
+
+model bitacoras {
+  id           Int    @id @default(autoincrement())
+  month        DateTime @default(now())
+  recipe       String
+  user_id      Int
+  program_id   Int
+  status       String   @default("En Progreso")
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  users         users      @relation(fields: [user_id], references: [id])
+  programs      programs   @relation(fields: [program_id], references: [id])
+  activities    activities[]
+}
+
+model program_residence {
+  id           Int   @id @default(autoincrement())
+  program_id   Int
+  residence_id Int
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  programs     programs   @relation(fields: [program_id], references: [id], onDelete: Cascade)
+  residences   residences @relation(fields: [residence_id], references: [id], onDelete: Cascade)
+}
+
+model programs {
+  id        Int    @id @default(autoincrement())
+  name      String
+  company  String
+  address   String
+  state     String
+  coordinator_id   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  coordinator     users @relation(fields: [coordinator_id], references: [id])
+  residences      program_residence[]
+  bitacoras  bitacoras[]
+}
+
+model activities {
+  id        Int    @id @default(autoincrement())
+  description String
+  date       DateTime
+  bitacora_id Int
+  category_id Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  bitacoras  bitacoras  @relation(fields: [bitacora_id], references: [id])
+  categories categories @relation(fields: [category_id], references: [id])
+  attachments attachments[]
+}
+
+model categories {
+  id        Int    @id @default(autoincrement())
+  name      String
+  description String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  activities activities[]
+}
+
+
+model attachments {
+  id        Int    @id @default(autoincrement())
+  image     String
+  activity_id Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  activity  activities @relation(fields: [activity_id], references: [id], onDelete: Cascade)
+}
