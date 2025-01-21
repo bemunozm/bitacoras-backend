@@ -9,9 +9,9 @@ import { validateRole } from "../middleware/role-validator";
 const router = Router();
 
 router.use(authenticate)
-router.use(validateRole(['Administrador']))
 
 router.post('/create',
+    validateRole(['Administrador']),
     body('name')
         .notEmpty().withMessage('El nombre no puede ir vacio'),
     handleInputErrors,
@@ -31,6 +31,7 @@ router.get('/get/:id',
 )
 
 router.put('/update/:id',
+    validateRole(['Administrador']),
     param('id')
         .notEmpty().withMessage('El id no puede ir vacio'),
     handleInputErrors,
@@ -38,6 +39,7 @@ router.put('/update/:id',
 )
 
 router.delete('/delete/:id',
+    validateRole(['Administrador']),
     param('id')
         .notEmpty().withMessage('El id no puede ir vacio'),
     handleInputErrors,

@@ -10,9 +10,9 @@ import upload from "../config/multer";
 const router = Router();
 
 router.use(authenticate)
-router.use(validateRole(['Administrador']))
 
 router.post('/create',
+    validateRole(['Administrador']),
     upload.single('profile_image'),
      body('run')
         .notEmpty().withMessage('El run no puede ir vacio'),
@@ -44,6 +44,7 @@ router.put('/update/:id',
 )
 
 router.delete('/delete/:id',
+    validateRole(['Administrador']),
     param('id')
         .notEmpty().withMessage('El id no puede ir vacio'),
     handleInputErrors,

@@ -7,8 +7,7 @@ import { BitacoraController } from "../controllers/BitacoraController";
 
 const router = Router();
 
-// router.use(authenticate)
-// router.use(validateRole(['Administrador']))
+router.use(authenticate)
 
 router.post('/create',
     body('month')
@@ -26,6 +25,13 @@ router.post('/create',
 router.get('/get',
     handleInputErrors,
     BitacoraController.getBitacoras
+)
+
+router.get('/get-by-period/:period',
+    param('period')
+        .notEmpty().withMessage('El periodo no puede ir vacio'),
+    handleInputErrors,
+    BitacoraController.getBitacorasByPeriod
 )
 
 router.get('/get/:id',
