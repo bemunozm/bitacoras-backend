@@ -95,6 +95,87 @@ export class BitacoraController {
 
     }
 
+    static async getBitacorasByPeriod(req: Request, res: Response) {
+        try {
+            const { period } = req.params;
+            let datePeriodStart: Date;
+            let datePeriodEnd: Date = new Date();
+            datePeriodEnd.setMonth(datePeriodEnd.getMonth() + 1);
+            datePeriodEnd.setDate(0);
+
+            switch (period) {
+                case 'current_month':
+                    datePeriodStart = new Date();
+                    datePeriodStart.setDate(1);
+                    break;
+                case 'last_month':
+                    datePeriodStart = new Date();
+                    datePeriodStart.setMonth(datePeriodStart.getMonth() - 1);
+                    datePeriodStart.setDate(1);
+                    datePeriodEnd = new Date(datePeriodStart);
+                    datePeriodEnd.setMonth(datePeriodEnd.getMonth() + 1);
+                    datePeriodEnd.setDate(0);
+                    break;
+                case 'last_3_months':
+                    datePeriodStart = new Date();
+                    datePeriodStart.setMonth(datePeriodStart.getMonth() - 3);
+                    break;
+                case 'last_6_months':
+                    datePeriodStart = new Date();
+                    datePeriodStart.setMonth(datePeriodStart.getMonth() - 6);
+                    break;
+                case 'history':
+                    datePeriodStart = new Date(0);
+                    break;
+                default:
+                    datePeriodStart = new Date();
+                    break;
+            }
+
+            console.log('📅', datePeriodStart, '-', datePeriodEnd);
+
+            const bitacoras = await prisma.bitacoras.findMany({
+                where: {
+                    month: {
+                        gte: datePeriodStart,
+                        lte: datePeriodEnd
+                    }
+                },
+                include: {
+                    programs: {
+                        include: {
+                            coordinator: true,
+                            residences: {
+                                include: {
+                                    residences: true
+                                }
+                            },
+                        }
+                    },
+                    activities: {
+                        include: {
+                            attachments: true,
+                            categories: true
+                        }
+                    },
+                    users: true,
+                }
+            });
+
+            const bitacorasWithResidences = bitacoras.map(bitacora => ({
+                ...bitacora,
+                programs: {
+                    ...bitacora.programs,
+                    residences: bitacora.programs.residences.map(residence => residence.residences)
+                }
+            }));
+
+            res.status(200).json(bitacorasWithResidences);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
     static async getBitacora(req: Request, res: Response) {
 
         const { id } = req.params;
@@ -245,6 +326,6 @@ export class BitacoraController {
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
-
     }
 }
+   

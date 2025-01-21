@@ -5,6 +5,7 @@ import { generateToken } from '../utils/token';
 import { AuthEmail } from '../emails/AuthEmail';
 import { generateJWT } from '../utils/jwt';
 import {v2 as cloudinary } from 'cloudinary';
+import { createConnection } from 'node:net';
 
 export class AuthController {
 
@@ -28,10 +29,22 @@ export class AuthController {
 
             const password = await hashPassword(req.body.password)
 
+            //rol por defecto Usuario
+            const role = await prisma.roles.findFirst({
+                where: {
+                    name: 'Usuario'
+                }
+            })
+
             const user = await prisma.users.create({
                 data: {
                     ...data,
-                    password
+                    password,
+                    roles: {
+                        connect: {
+                            id: role.id
+                        }
+                    }
                 }
             })
 

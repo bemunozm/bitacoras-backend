@@ -13,10 +13,11 @@ import activityRoutes from './routes/activityRoutes';
 import { corsConfig } from './config/cors';
 import { connectDB } from './config/db';
 import { startCronJobs } from './config/cron';
-import path from 'node:path';
+import { setupRoles } from './config/setupRoles';
 
 dotenv.config();
 connectDB();
+setupRoles();
 startCronJobs();
 const app = express();
 
@@ -38,7 +39,5 @@ app.use('/api/programs', programRoutes)
 app.use('/api/bitacoras', bitacoraRoutes)
 app.use('/api/activities', activityRoutes)
 
-//Imagenes
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 export default app;

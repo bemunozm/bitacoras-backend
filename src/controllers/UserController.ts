@@ -10,11 +10,25 @@ export class UserController {
     static async createUser(req: Request, res: Response) {
     
         const { run, name, job_position, email, phone, roles } = req.body;
-
     
         try {
             const tempPassword = Math.random().toString(36).slice(-8);
             const hashedPassword = await hashPassword(tempPassword);
+
+            let rolesData = roles ? roles.map(role => ({
+                role_id: +role
+            })) : [];
+
+            if (!roles) {
+                const defaultRole = await prisma.roles.findFirst({
+                    where: {
+                        name: 'Usuario'
+                    }
+                });
+                if (defaultRole) {
+                    rolesData.push({ role_id: defaultRole.id });
+                }
+            }
     
             const user = await prisma.users.create({
                 data: {
@@ -27,9 +41,7 @@ export class UserController {
                     profile_image: req.file ? req.file.path : null,
                     roles: {
                         createMany: {
-                            data: roles.map(role => ({
-                                role_id: +role
-                            }))
+                            data: rolesData
                         }
                     }
                 }

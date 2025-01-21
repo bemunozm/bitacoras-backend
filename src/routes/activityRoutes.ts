@@ -8,8 +8,8 @@ import upload from "../config/multer";
 
 const router = Router();
 
-// router.use(authenticate)
-// router.use(validateRole(['Administrador']))
+router.use(authenticate)
+
 
 router.post('/create',
     upload.array('attachments[]',10),
