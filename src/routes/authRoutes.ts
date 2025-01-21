@@ -16,10 +16,10 @@ router.post('/create-account',
     body('name')
         .notEmpty().withMessage('El nombre no puede ir vacio'),
     body('password')
-        .isLength({ min: 8 }).withMessage('El password es muy corto, minimo 8 caracteres'),
+        .isLength({ min: 8 }).withMessage('La contraseña es muy corta, minimo 8 caracteres'),
     body('password_confirmation').custom((value, { req }) => {
         if (value !== req.body.password) {
-            throw new Error('Los Password no son iguales')
+            throw new Error('Las contraseñas no son iguales')
         }
         return true
     }),
@@ -40,7 +40,7 @@ router.post('/login',
     body('email')
         .isEmail().withMessage('E-mail no válido'),
     body('password')
-        .notEmpty().withMessage('El password no puede ir vacio'),
+        .notEmpty().withMessage('La contraseña no puede ir vacia'),
     handleInputErrors,
     AuthController.login
 )
@@ -70,10 +70,10 @@ router.post('/update-password/:token',
     param('token')
         .isNumeric().withMessage('Token no válido'),
     body('password')
-        .isLength({ min: 8 }).withMessage('El password es muy corto, minimo 8 caracteres'),
+        .isLength({ min: 8 }).withMessage('La contraseña es muy corta, minimo 8 caracteres'),
     body('password_confirmation').custom((value, { req }) => {
         if (value !== req.body.password) {
-            throw new Error('Los Password no son iguales')
+            throw new Error('Las contraseñas no son iguales')
         }
         return true
     }),
@@ -101,9 +101,9 @@ router.put('/profile',
 router.post('/update-password',
     authenticate,
     body('current_password')
-        .notEmpty().withMessage('El password actual no puede ir vacio'),
+        .notEmpty().withMessage('La contraseña actual no puede ir vacia'),
     body('password')
-        .isLength({ min: 8 }).withMessage('El password es muy corto, minimo 8 caracteres'),
+        .isLength({ min: 8 }).withMessage('La contraseña es muy corta, minimo 8 caracteres'),
     body('password_confirmation').custom((value, { req }) => {
         if (value !== req.body.password) {
             throw new Error('Los Password no son iguales')
@@ -117,7 +117,7 @@ router.post('/update-password',
 router.post('/check-password',
     authenticate,
     body('password')
-        .notEmpty().withMessage('El password no puede ir vacio'),
+        .notEmpty().withMessage('La contraseña no puede ir vacia'),
     handleInputErrors,
     AuthController.checkPassword
 )

@@ -41,8 +41,8 @@ export class AuthController {
                     ...data,
                     password,
                     roles: {
-                        connect: {
-                            id: role.id
+                        createConnection: {
+                            role_id: role.id
                         }
                     }
                 }
@@ -324,7 +324,7 @@ export class AuthController {
                 }
             })
 
-            res.send('El password se modificó correctamente')
+            res.send('La contraseña se modificó correctamente')
         } catch (error) {
             res.status(500).json({ error: 'Hubo un error' })
         }
@@ -405,7 +405,7 @@ export class AuthController {
 
         const isPasswordCorrect = await checkPassword(current_password, user.password)
         if (!isPasswordCorrect) {
-            const error = new Error('El Password actual es incorrecto')
+            const error = new Error('La contraseña actual es incorrecta')
             res.status(401).json({ error: error.message })
             return;
         }
@@ -420,7 +420,7 @@ export class AuthController {
                     password: passwordHash
                 }
             })
-            res.send('El Password se modificó correctamente')
+            res.send('La contraseña se modificó correctamente')
         } catch (error) {
             res.status(500).send('Hubo un error')
         }
@@ -437,7 +437,7 @@ export class AuthController {
 
         const isPasswordCorrect = await checkPassword(password, user.password)
         if (!isPasswordCorrect) {
-            const error = new Error('El Password es incorrecto')
+            const error = new Error('La contraseña es incorrecta')
             res.status(401).json({ error: error.message })
             return;
         }
