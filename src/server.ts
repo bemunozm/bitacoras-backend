@@ -10,6 +10,11 @@ import categoryRoutes from './routes/categoryRoutes';
 import programRoutes from './routes/programRoutes';
 import bitacoraRoutes from './routes/bitacoraRoutes';
 import activityRoutes from './routes/activityRoutes';
+import provisionRoutes from './routes/provisionRoutes';
+import provisionCategoryRoutes from './routes/provisioncategoryRoutes';
+import eventRoutes from './routes/eventRoutes';
+import diseaseRoutes from './routes/diseaseRoutes';
+import participantRoutes from './routes/participantRoutes';
 import { corsConfig } from './config/cors';
 import { connectDB } from './config/db';
 import { startCronJobs } from './config/cron';
@@ -38,6 +43,10 @@ app.use('/api/categories', categoryRoutes)
 app.use('/api/programs', programRoutes)
 app.use('/api/bitacoras', bitacoraRoutes)
 app.use('/api/activities', activityRoutes)
-
+app.use('/api/provisions', provisionRoutes)
+app.use('/api/provision-categories', provisionCategoryRoutes)
+app.use('/api/events', eventRoutes)
+app.use('/api/diseases', diseaseRoutes)
+app.use('/api/participants', participantRoutes)
 
 export default app;

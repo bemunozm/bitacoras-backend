@@ -19,6 +19,26 @@ async function deleteExpiredTokens() {
   }
 }
 
+async function expiredParticipants() {
+  try {
+
+    const result = await prisma.participant_residence.updateMany({
+      where: {
+        departure_date: {
+          lt: new Date(), // Tokens que ya expiraron
+        },
+      },
+      data: {
+        status: 'Pendiente de Salida',
+      },
+    });
+
+    console.log(`[Cron] ${result.count} nuevos participantes pendientes de salida.`);
+  } catch (error) {
+    console.error('[Cron] Error eliminando tokens expirados:', error);
+  }
+}
+
 // Configuración del cron job
 export const startCronJobs = () => {
   const job = new CronJob(
@@ -33,6 +53,19 @@ export const startCronJobs = () => {
     'America/Santiago' // Zona horaria
   );
 
+  const job2 = new CronJob(
+    '0 0 * * *', // Ejecutar cada día a la medianoche
+    async () => {
+      console.log('[Cron] Verificando participantes expirados...');
+      await expiredParticipants();
+      console.log('[Cron] Verificación completada.');
+    },
+    null,
+    true, // Inicia automáticamente
+    'America/Santiago' // Zona horaria
+  );
+
   console.log('[Cron] Cron jobs inicializados.');
   job.start();
+  job2.start();
 };

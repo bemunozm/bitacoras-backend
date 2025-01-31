@@ -79,6 +79,7 @@ model residences {
   updated_at DateTime @updatedAt
   users     residence_user[]
   programs program_residence[]
+  participants participant_residence[]
 }
 
 model bitacoras {
@@ -149,4 +150,104 @@ model attachments {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   activity  activities @relation(fields: [activity_id], references: [id], onDelete: Cascade)
+}
+
+model participant_residence {
+  id           Int   @id @default(autoincrement())
+  residence_id Int
+  participant_id Int
+  admission_date DateTime @default(now())
+  departure_date DateTime?
+  status       String
+  admission_notes        String?
+  departure_notes        String?
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+  residences   residences @relation(fields: [residence_id], references: [id], onDelete: Cascade)
+  participants participants @relation(fields: [participant_id], references: [id], onDelete: Cascade)
+}
+
+model participants {
+  id        Int    @id @default(autoincrement())
+  name      String
+  run       String  @unique
+  gender    String
+  birthdate DateTime?
+  nationality String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  residences participant_residence[]
+  events       events[]
+  diseases     disease_participant[]
+  provisions participant_provision[]
+}
+
+model disease_participant {
+  id        Int    @id @default(autoincrement())
+  participant_id Int
+  disease_id Int
+  date     DateTime
+  treatment_status   String
+  comments  String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  participants participants @relation(fields: [participant_id], references: [id], onDelete: Cascade)
+  diseases diseases @relation(fields: [disease_id], references: [id], onDelete: Cascade)
+}
+
+
+model diseases {
+  id        Int    @id @default(autoincrement())
+  name      String
+  description String?
+  type      String
+  treatment_required Boolean @default(false)
+  contagious Boolean @default(false)
+  notes     String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  participants disease_participant[]
+}
+
+model events {
+  id        Int    @id @default(autoincrement())
+  date      DateTime
+  description String
+  type      String
+  participant_id Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  participant participants @relation(fields: [participant_id], references: [id], onDelete: Cascade)
+}
+
+model participant_provision {
+  id       Int    @id @default(autoincrement())
+  participant_id Int
+  provision_id Int
+  date     DateTime
+  turn String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  participant participants @relation(fields: [participant_id], references: [id], onDelete: Cascade)
+  provision provisions @relation(fields: [provision_id], references: [id], onDelete: Cascade)
+}
+
+model provisions {
+  id        Int    @id @default(autoincrement())
+  name      String
+  description String?
+  provision_category_id Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  category provision_categories @relation(fields: [provision_category_id], references: [id], onDelete: Cascade)
+  participants participant_provision[]
+}
+
+model provision_categories {
+  id        Int    @id @default(autoincrement())
+  name      String
+  description String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  provisions provisions[]
 }

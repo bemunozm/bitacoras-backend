@@ -46,6 +46,45 @@ router.delete('/delete/:id',
     ResidenceController.deleteResidence
 )
 
+router.post('/participant-entrance',
+    validateRole(['Administrador']),
+    body('residence_id')
+        .notEmpty().withMessage('El id de la residencia no puede ir vacio'),
+    body('participant_id')
+        .notEmpty().withMessage('El id del participante no puede ir vacio'),
+    body('status')
+        .notEmpty().withMessage('El estado no puede ir vacio'),
+    body('admission_date')
+        .notEmpty().withMessage('La fecha de ingreso no puede ir vacio'),
+    handleInputErrors,
+    ResidenceController.ParticipantEntrance
+)
+
+router.post('/participant-departure',
+    validateRole(['Administrador']),
+    body('residence_id')
+        .notEmpty().withMessage('El id de la residencia no puede ir vacio'),
+    body('participant_id')
+        .notEmpty().withMessage('El id del participante no puede ir vacio'),
+    body('status')
+        .notEmpty().withMessage('El estado no puede ir vacio'),
+    body('departure_date')
+        .notEmpty().withMessage('La fecha de ingreso no puede ir vacio'),
+    handleInputErrors,
+    ResidenceController.ParticipantDeparture
+)
+
+router.get('/active-participants',
+    ResidenceController.getActiveParticipants
+)
+
+router.get('/get-participants/:id',
+    param('id')
+        .notEmpty().withMessage('El id no puede ir vacio'),
+    handleInputErrors,
+    ResidenceController.getParticipantsByResidence
+)
+
 
 
 export default router;
