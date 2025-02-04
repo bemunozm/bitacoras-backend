@@ -7,7 +7,16 @@ export class ProvisionCategoryController {
         try {
             const { name, description } = req.body;
 
-            const category = await prisma.provision_categories.create({
+            const categoryExists = await prisma.provision_categories.findFirst({
+                where: { name }
+            });
+
+            if (categoryExists) {
+                res.status(400).json({ error: 'La categoría de provisión ya existe' });
+                return;
+            }
+
+            await prisma.provision_categories.create({
                 data: {
                     name,
                     description
@@ -57,7 +66,31 @@ export class ProvisionCategoryController {
     static async updateProvisionCategory(req: Request, res: Response) {
         const { id } = req.params;
         try {
-            const category = await prisma.provision_categories.update({
+
+            const categoryExists = await prisma.provision_categories.findFirst({
+                where: { id: parseInt(id) }
+            });
+
+            if (!categoryExists) {
+                res.status(404).json({ error: 'Categoría no encontrada' });
+                return;
+            }
+
+            const otherCategoryExists = await prisma.provision_categories.findFirst({
+                where: {
+                    name: req.body.name,
+                    id: {
+                        not: parseInt(id)
+                    }
+                }
+            });
+
+            if (otherCategoryExists) {
+                res.status(400).json({ error: 'La categoría ya existe' });
+                return;
+            }
+
+            await prisma.provision_categories.update({
                 where: { id: parseInt(id) },
                 data: req.body
             });

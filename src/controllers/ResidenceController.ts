@@ -6,6 +6,15 @@ export class ResidenceController {
     static async createResidence(req: Request, res: Response) {
 
         try {
+
+            const residenceExists = await prisma.residences.findFirst({
+                where: { name: req.body.name }
+            });
+
+            if (residenceExists) {
+                res.status(400).json({ error: 'La residencia ya existe' });
+                return;
+            }
             
             await prisma.residences.create({
                 data: req.body
@@ -80,6 +89,20 @@ export class ResidenceController {
                 return;
             }
 
+            const residenceExists = await prisma.residences.findFirst({
+                where: {
+                    name: req.body.name,
+                    id: {
+                        not: parseInt(id)
+                    }
+                }
+            });
+
+            if (residenceExists) {
+                res.status(400).json({ error: 'Ya existe una residencia con este nombre' });
+                return;
+            }
+
             await prisma.residences.update({
                 where: { id: parseInt(id) },
                 data: req.body
@@ -145,7 +168,7 @@ export class ResidenceController {
                 data: {
                     participant_id: parseInt(participant_id),
                     residence_id: parseInt(residence_id),
-                    status: status || 'Activo',
+                    status: status || 'Residencia en Curso',
                     admission_date,
                     departure_date,
                     admission_notes
@@ -186,7 +209,7 @@ export class ResidenceController {
                 where: {
                     participant_id: parseInt(participant_id),
                     residence_id: parseInt(residence_id),
-                    status: 'Activo'
+                    status: { in: ['Residencia en Curso', 'Pendiente de Salida', 'Pendiente de Admision'] }
                 }
             });
 

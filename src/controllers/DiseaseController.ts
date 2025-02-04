@@ -7,7 +7,16 @@ export class DiseaseController {
         try {
             const { name, description, type, treatment_required, contagious, notes } = req.body;
 
-            const disease = await prisma.diseases.create({
+            const diseaseExists = await prisma.diseases.findFirst({
+                where: { name }
+            });
+
+            if (diseaseExists) {
+                res.status(400).json({ error: 'La enfermedad ya existe' });
+                return;
+            }
+
+            await prisma.diseases.create({
                 data: {
                     name,
                     description,
@@ -58,8 +67,16 @@ export class DiseaseController {
         const { id } = req.params;
         try {
 
-            console.log(req.body);
-            const disease = await prisma.diseases.update({
+            const diseaseExists = await prisma.diseases.findFirst({
+                where: { name: req.body.name, id: { not: parseInt(id) } }
+            });
+
+            if (diseaseExists) {
+                res.status(400).json({ error: 'La enfermedad ya existe' });
+                return;
+            }
+
+            await prisma.diseases.update({
                 where: { id: parseInt(id) },
                 data: req.body
             });
@@ -73,6 +90,25 @@ export class DiseaseController {
     static async deleteDisease(req: Request, res: Response) {
         const { id } = req.params;
         try {
+
+            const diseaseExists = await prisma.diseases.findUnique({
+                where: { id: parseInt(id) }
+            });
+
+            if (!diseaseExists) {
+                res.status(404).json({ error: 'Enfermedad no encontrada' });
+                return;
+            }
+
+            const diseaseAssigned = await prisma.disease_participant.findFirst({
+                where: { disease_id: parseInt(id) }
+            });
+
+            if (diseaseAssigned) {
+                res.status(400).json({ error: 'La enfermedad está asignada a un participante' });
+                return;
+            }
+
             await prisma.diseases.delete({
                 where: { id: parseInt(id) }
             });
@@ -106,6 +142,15 @@ export class DiseaseController {
                 return;
             }
 
+            const diseaseAssigned = await prisma.disease_participant.findFirst({
+                where: { disease_id: parseInt(disease_id), participant_id: parseInt(participant_id) }
+            });
+
+            if (diseaseAssigned) {
+                res.status(400).json({ error: 'La enfermedad ya está asignada a este participante' });
+                return;
+            }
+
             await prisma.disease_participant.create({
                 data: {
                     disease_id: parseInt(disease_id),
@@ -125,6 +170,17 @@ export class DiseaseController {
     static async updateAssignedDisease(req: Request, res: Response) {
         const { id, treatment_status, date, comments } = req.body;
         try {
+
+            const diseaseAssigned = await prisma.disease_participant.findUnique({
+                where: { id: parseInt(id) }
+            });
+
+            if (!diseaseAssigned) {
+                res.status(404).json({ error: 'Seguimiento no encontrado' });
+                return;
+            }
+
+
             await prisma.disease_participant.update({
                 where: {id: parseInt(id)},
                 data: {

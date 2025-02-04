@@ -7,7 +7,25 @@ export class ProvisionController {
         try {
             const { name, description, provision_category_id } = req.body;
 
-            const provision = await prisma.provisions.create({
+            const provisionExists = await prisma.provisions.findFirst({
+                where: { name }
+            });
+
+            if (provisionExists) {
+                res.status(400).json({ error: 'Ya existe una prestación con este nombre' });
+                return;
+            }
+
+            const categoryExists = await prisma.provision_categories.findFirst({
+                where: { id: provision_category_id }
+            });
+
+            if (!categoryExists) {
+                res.status(400).json({ error: 'La categoría de la prestación no existe' });
+                return;
+            }
+
+            await prisma.provisions.create({
                 data: {
                     name,
                     description,
@@ -58,7 +76,40 @@ export class ProvisionController {
     static async updateProvision(req: Request, res: Response) {
         const { id } = req.params;
         try {
-            const provision = await prisma.provisions.update({
+
+            const provisionExists = await prisma.provisions.findFirst({
+                where: { id: parseInt(id) }
+            });
+
+            if (!provisionExists) {
+                res.status(404).json({ error: 'Provisión no encontrada' });
+                return;
+            }
+
+            const otherProvisionExists = await prisma.provisions.findFirst({
+                where: {
+                id: {
+                    not: parseInt(id)
+                },
+                name: req.body.name
+            }
+            });
+
+            if (otherProvisionExists) {
+                res.status(400).json({ error: 'Ya existe una prestación con este nombre' });
+                return;
+            }
+
+            const categoryExists = await prisma.provision_categories.findFirst({
+                where: { id: req.body.provision_category_id }
+            });
+
+            if (!categoryExists) {
+                res.status(400).json({ error: 'La categoría de la prestación no existe' });
+                return;
+            }
+
+            await prisma.provisions.update({
                 where: { id: parseInt(id) },
                 data: req.body
             });

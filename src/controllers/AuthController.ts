@@ -5,7 +5,6 @@ import { generateToken } from '../utils/token';
 import { AuthEmail } from '../emails/AuthEmail';
 import { generateJWT } from '../utils/jwt';
 import {v2 as cloudinary } from 'cloudinary';
-import { createConnection } from 'node:net';
 
 export class AuthController {
 
@@ -314,7 +313,8 @@ export class AuthController {
                     id: user.id
                 },
                 data: {
-                    password: passwordHash
+                    password: passwordHash,
+                    is_confirmed: true
                 }
             })
 

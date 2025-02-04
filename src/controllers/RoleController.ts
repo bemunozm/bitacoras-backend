@@ -6,6 +6,16 @@ export class RoleController {
     static async createRole(req: Request, res: Response) : Promise<void> {
 
         try {
+
+            const roleExists = await prisma.roles.findFirst({
+                where: { name: req.body.name }
+            });
+
+            if (roleExists) {
+                res.status(400).json({ error: 'El rol ya existe' });
+                return;
+            }
+
             // Crear el rol
             await prisma.roles.create({
                 data: req.body
@@ -65,6 +75,15 @@ export class RoleController {
                 return;
             }
 
+            const roleExists = await prisma.roles.findFirst({
+                where: { name: req.body.name, id: { not: parseInt(id) } }
+            });
+
+            if (roleExists) {
+                res.status(400).json({ error: 'El rol ya existe' });
+                return;
+            }
+
             await prisma.roles.update({
                 where: { id: parseInt(id) },
                 data: req.body
@@ -90,6 +109,15 @@ export class RoleController {
 
             if (!role) {
                 res.status(404).json({ error: 'Rol no encontrado' });
+                return;
+            }
+
+            const roleInUse = await prisma.role_user.findFirst({
+                where: { role_id: parseInt(id) }
+            });
+
+            if (roleInUse) {
+                res.status(400).json({ error: 'El rol está en uso' });
                 return;
             }
 

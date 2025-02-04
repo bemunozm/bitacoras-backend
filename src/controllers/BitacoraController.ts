@@ -1,8 +1,5 @@
 import type { Request, Response } from 'express';
 import prisma from '../config/db';
-import path from 'path';
-import fs from 'fs';
-
 
 export class BitacoraController {
 
@@ -27,6 +24,19 @@ export class BitacoraController {
 
             if (!program) {
                 res.status(404).json({ error: 'Programa no encontrado' });
+                return;
+            }
+
+            const bitacoraExists = await prisma.bitacoras.findFirst({
+                where: {
+                    month,
+                    user_id,
+                    program_id
+                }
+            });
+
+            if (bitacoraExists) {
+                res.status(400).json({ error: 'Ya existe una bitácora para este mes y programa' });
                 return;
             }
 
@@ -234,9 +244,21 @@ export class BitacoraController {
 
         const { id } = req.params;
 
-        console.log(req.body);
-
         try {
+
+            const bitacoraExists = await prisma.bitacoras.findFirst({
+                where: {
+                    id: { not: parseInt(id) },
+                    month: req.body.month,
+                    user_id: req.body.user_id,
+                    program_id: req.body.program_id
+                }
+            });
+
+            if (bitacoraExists) {
+                res.status(400).json({ error: 'Ya existe otra bitácora para este mes y programa' });
+                return;
+            }
             
             await prisma.bitacoras.update({
                 where: { id: parseInt(id) },
@@ -246,9 +268,6 @@ export class BitacoraController {
                     status: req.body.status,
                     programs: {
                         connect: { id: req.body.program_id }
-                    },
-                    users: {
-                        connect: { id: req.body.user_id }
                     }
                 }
             });
@@ -267,34 +286,25 @@ export class BitacoraController {
 
         try {
 
-            // //Eliminar actividades y archivos adjuntos
-            // const activities = await prisma.activities.findMany({
-            //     where: { bitacora_id: parseInt(id) },
-            //     include: {
-            //         attachments: true
-            //     }
-            // });
+            const bitacora = await prisma.bitacoras.findUnique({
+                where: { id: parseInt(id) }
+            });
 
-            // //Eliminar imagenes guardadas en el servidor
-            // for (const activity of activities) {
-            //     if (activity.attachments.length > 0) {
-            //         await prisma.attachments.deleteMany({
-            //             where: {
-            //                 activity_id: activity.id
-            //             }
-            //         });
+            if (!bitacora) {
+                res.status(404).json({ error: 'Bitácora no encontrada' });
+                return;
+            }
 
-            //         activity.attachments.forEach((attachment) => {
-            //             const filePath = path.join(__dirname, '../../', attachment.image);
-            //             fs.unlink(filePath, (err) => {
-            //                 if (err) {
-            //                     console.error(`Error al eliminar el archivo: ${filePath}`, err);
-            //                 }
-            //             });
-            //         });
-            //     }
-            // }
-            
+            //Verificar que no tenga actividades asociadas
+            const activities = await prisma.activities.findMany({
+                where: { bitacora_id: parseInt(id) }
+            });
+
+            if (activities.length > 0) {
+                res.status(400).json({ error: 'No se puede eliminar la bitácora porque tiene actividades asociadas' });
+                return;
+            }
+
             await prisma.bitacoras.delete({
                 where: { id: parseInt(id) }
             });

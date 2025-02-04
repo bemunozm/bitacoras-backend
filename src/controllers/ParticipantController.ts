@@ -17,7 +17,7 @@ export class ParticipantController {
             });
 
             if (participantExists) {
-                res.status(409).json({ error: 'El participante ya se encuentra registrado.' });
+                res.status(409).json({ error: `Ya se encuentra registrado un participante con este RUT (${participantExists.name} [${participantExists.run}])` });
                 return;
             }
             
@@ -129,6 +129,27 @@ export class ParticipantController {
         const { id } = req.params;
 
         try {
+
+            const participantExists = await prisma.participants.findFirst({
+                where: { id: parseInt(id) }
+            });
+
+            if (!participantExists) {
+                res.status(404).json({ error: 'Participante no encontrado' });
+                return;
+            }
+
+            const otherParticipantWithSameRun = await prisma.participants.findFirst({
+                where: {
+                    run: req.body.run,
+                    id: {not: parseInt(id)}
+                }
+            });
+
+            if (otherParticipantWithSameRun) {
+                res.status(409).json({ error: `Ya se encuentra registrado un participante con este RUT (${otherParticipantWithSameRun.name} [${otherParticipantWithSameRun.run}])` });
+                return;
+            }
             
             await prisma.participants.update({
                 where: { id: parseInt(id) },
@@ -150,6 +171,15 @@ export class ParticipantController {
         const { id } = req.params;
 
         try {
+
+            const participantExists = await prisma.participants.findFirst({
+                where: { id: parseInt(id) }
+            });
+
+            if (!participantExists) {
+                res.status(404).json({ error: 'Participante no encontrado' });
+                return;
+            }
             
             await prisma.participants.delete({
                 where: { id: parseInt(id) }
@@ -208,6 +238,8 @@ export class ParticipantController {
 
         try {
             
+            let currentAssignedBenefits = [];
+
             const participant = await prisma.participants.findUnique({
                 where: { id: parseInt(participant_id) }
             });
@@ -217,18 +249,41 @@ export class ParticipantController {
                 return;
             }
 
-            for (const benefit of benefits) {
+            const benefitChecks = benefits.map(async (benefit) => {
                 const provisionExists = await prisma.provisions.findUnique({
                     where: { id: parseInt(benefit) },
                 });
 
                 if (!provisionExists) {
-                    res.status(404).json({ error: 'Prestación no encontrada' });
-                    return;
+                    throw new Error('Prestación no encontrada');
                 }
+
+                const provisionAssigned = await prisma.participant_provision.findFirst({
+                    where: {
+                        participant_id: participant.id,
+                        provision_id: provisionExists.id,
+                        turn,
+                        date: {
+                            gte: new Date(new Date(date).setHours(0, 0, 0, 0)),
+                            lt: new Date(new Date(date).setHours(23, 59, 59, 999))
+                        }
+                    },
+                    include: {
+                        provision: true
+                    }
+                });
+
+                if (provisionAssigned) {
+                    currentAssignedBenefits.push(provisionAssigned.provision.name);
+                }
+            });
+
+            await Promise.all(benefitChecks);
+
+            if (currentAssignedBenefits.length > 0) {
+                res.status(409).json({ error: `Ya se encuentran asignadas las prestaciones ${currentAssignedBenefits.join(', ')} para el participante en el turno ${turn} y fecha ${new Date(date).toLocaleDateString('es-ES')}` });
+                return;
             }
-
-
 
             await prisma.participant_provision.createMany({
                 data: benefits.map(benefit => ({
@@ -242,7 +297,11 @@ export class ParticipantController {
             res.send('Prestaciones entregadas correctamente');
 
         } catch (error) {
-            res.status(500).json({ error: error.message });
+            if (error.message === 'Prestación no encontrada') {
+                res.status(404).json({ error: error.message });
+            } else {
+                res.status(500).json({ error: error.message });
+            }
         }
 
     }
@@ -251,8 +310,23 @@ export class ParticipantController {
 
         const benefits = req.body;
         
-        console.log(benefits);
         try {
+            console.log(benefits);
+
+            const provisionExists = await prisma.participant_provision.findMany({
+                where: {
+                    id: {
+                        in: benefits.map(benefit => parseInt(benefit))
+                    }
+                }
+            });
+
+            console.log(provisionExists);
+
+            if (provisionExists.length !== benefits.length) {
+                res.status(404).json({ error: 'Al menos una de las prestaciones asignadas no existe' });
+                return;
+            }
             
             await prisma.participant_provision.deleteMany({
                 where: {
@@ -282,7 +356,7 @@ export class ParticipantController {
             });
 
             if (!participant_provision) {
-                res.status(404).json({ error: 'Relación no encontrado' });
+                res.status(404).json({ error: 'Relación no encontrada' });
                 return;
             }
 
@@ -292,6 +366,25 @@ export class ParticipantController {
 
             if (!provisionExists) {
                 res.status(404).json({ error: 'Prestación no encontrada' });
+                return;
+            }
+
+            const otherDeliveredBenefit = await prisma.participant_provision.findFirst({
+                where: {
+                    id: {
+                        not: parseInt(id)
+                    },
+                    date: {
+                        gte: new Date(new Date(date).setHours(0, 0, 0, 0)),
+                        lt: new Date(new Date(date).setHours(23, 59, 59, 999))
+                    },
+                    turn,
+                    provision_id: parseInt(provision_id)
+                }
+            });
+
+            if (otherDeliveredBenefit) {
+                res.status(409).json({ error: `Ya se encuentra asignada la prestación ${provisionExists.name} para el participante en el turno ${turn} y fecha ${new Date(date).toLocaleDateString('es-ES')}` });
                 return;
             }
 

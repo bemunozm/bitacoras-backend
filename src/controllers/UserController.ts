@@ -29,6 +29,20 @@ export class UserController {
                     rolesData.push({ role_id: defaultRole.id });
                 }
             }
+
+            const userExists = await prisma.users.findFirst({
+                where: {
+                    OR: [
+                        { email },
+                        { run }
+                    ]
+                }
+            });
+
+            if (userExists) {
+                res.status(400).json({ error: 'El usuario ya existe' });
+                return;
+            }
     
             const user = await prisma.users.create({
                 data: {
@@ -158,6 +172,23 @@ export class UserController {
                     }
                 }
             });
+
+            const otherUserExists = await prisma.users.findFirst({
+                where: {
+                    OR: [
+                        { email },
+                        { run }
+                    ],
+                    id: {
+                        not: Number(id)
+                    }
+                }
+            });
+
+            if (otherUserExists) {
+                res.status(400).json({ error: 'Ya existe otro usuario con este email o rut' });
+                return;
+            }
     
             // Luego, actualizar el usuario con los nuevos roles
             await prisma.users.update({

@@ -6,6 +6,15 @@ export class CategoryController {
     static async createCategory(req: Request, res: Response) {
         
         try {
+
+            const categoryExists = await prisma.categories.findFirst({
+                where: { name: req.body.name }
+            });
+
+            if (categoryExists) {
+                res.status(400).json({ error: 'La categoría ya existe' });
+                return;
+            }
             
             await prisma.categories.create({
                 data: req.body
@@ -62,6 +71,15 @@ export class CategoryController {
         const { id } = req.params;
 
         try {
+
+            const categoryExists = await prisma.categories.findFirst({
+                where: { name: req.body.name, id: { not: parseInt(id) } }
+            });
+
+            if (categoryExists) {
+                res.status(400).json({ error: 'La categoría ya existe' });
+                return;
+            }
             
             await prisma.categories.update({
                 where: { id: parseInt(id) },
@@ -80,6 +98,26 @@ export class CategoryController {
         const { id } = req.params;
 
         try {
+
+            const categoryExists = await prisma.categories.findUnique({
+                where: { id: parseInt(id) }
+            });
+
+            if (!categoryExists) {
+                res.status(404).json({ error: 'Categoría no encontrada' });
+                return;
+            }
+
+            //Verificar que no tenga actividades asociadas
+            const activities = await prisma.activities.findMany({
+                where: { category_id: parseInt(id) }
+            });
+
+            if (activities.length > 0) {
+                res.status(400).json({ error: 'La categoría tiene actividades asociadas. Debes eliminarlas antes de eliminar la categoría.' });
+                return;
+            }
+            
             
             await prisma.categories.delete({
                 where: { id: parseInt(id) }

@@ -7,7 +7,16 @@ export class EventController {
         try {
             const { date, description, type, participant_id } = req.body;
 
-            const event = await prisma.events.create({
+            const participantExists = await prisma.participants.findFirst({
+                where: { id: participant_id }
+            });
+
+            if (!participantExists) {
+                res.status(400).json({ error: 'El participante no existe' });
+                return;
+            }
+
+            await prisma.events.create({
                 data: {
                     date,
                     description,
@@ -58,10 +67,26 @@ export class EventController {
 
     static async updateEvent(req: Request, res: Response) {
         const { id } = req.params;
+        const { date, description, type} = req.body;
+
         try {
-            const event = await prisma.events.update({
+
+            const eventExists = await prisma.events.findUnique({
+                where: { id: parseInt(id) }
+            });
+
+            if (!eventExists) {
+                res.status(404).json({ error: 'Evento no encontrado' });
+                return;
+            }
+
+            await prisma.events.update({
                 where: { id: parseInt(id) },
-                data: req.body
+                data: {
+                    date,
+                    description,
+                    type
+                }   
             });
 
             res.send('Evento actualizado correctamente');

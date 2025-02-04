@@ -8,6 +8,31 @@ export class ProgramController {
         const { name, company, address, state, coordinator_id, residences } = req.body;
 
         try {
+
+            const coordinatorExists = await prisma.users.findFirst({
+                where: { id: coordinator_id },
+                include: {
+                    roles: {
+                        include: {
+                            roles: true
+                        }
+                    }
+                }
+            });
+
+            if (!coordinatorExists || !coordinatorExists.roles.some(role => role.roles.name === 'Coordinador')) {
+                res.status(400).json({ error: 'El coordinador no existe o no tiene el rol de Coordinador' });
+                return;
+            }
+
+            const programExists = await prisma.programs.findFirst({
+                where: { name, company, address, state }
+            });
+
+            if (programExists) {
+                res.status(400).json({ error: 'El programa ya existe' });
+                return;
+            }
             
             await prisma.programs.create({
                 data: {
@@ -128,6 +153,32 @@ export class ProgramController {
                     }
                 }
             });
+
+            const coordinatorExists = await prisma.users.findFirst({
+                where: { id: coordinator_id },
+                include: {
+                    roles: {
+                        include: {
+                            roles: true
+                        }
+                    }
+                }
+            });
+
+            if (!coordinatorExists || !coordinatorExists.roles.some(role => role.roles.name === 'Coordinador')) {
+                res.status(400).json({ error: 'El coordinador no existe o no tiene el rol de Coordinador' });
+                return;
+            }
+
+            const programExists = await prisma.programs.findFirst({
+                where: { name, company, address, state, id: { not: Number(id) } }
+            });
+
+            if (programExists) {
+                res.status(400).json({ error: 'El programa ya existe' });
+                return;
+            }
+
     
             // Luego, actualizar el usuario con los nuevos roles
             await prisma.programs.update({
@@ -162,6 +213,24 @@ export class ProgramController {
         const { id } = req.params;
 
         try {
+
+            const programExists = await prisma.programs.findUnique({
+                where: { id: parseInt(id) }
+            });
+
+            if (!programExists) {
+                res.status(404).json({ error: 'Programa no encontrado' });
+                return;
+            }
+
+            const programBitacoras = await prisma.bitacoras.findMany({
+                where: { program_id: parseInt(id) }
+            });
+
+            if (programBitacoras.length > 0) {
+                res.status(400).json({ error: 'No se puede eliminar el programa porque tiene bitácoras asociadas' });
+                return;
+            }
             
             await prisma.programs.delete({
                 where: { id: parseInt(id) }
