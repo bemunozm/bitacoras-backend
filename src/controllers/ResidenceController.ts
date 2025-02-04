@@ -164,6 +164,19 @@ export class ResidenceController {
                 return;
             }
 
+            const participantResidence = await prisma.participant_residence.findFirst({
+                where: {
+                    participant_id: parseInt(participant_id),
+                    residence_id: parseInt(residence_id),
+                    status: { in: ['Residencia en Curso', 'Pendiente de Salida', 'Pendiente de Admision'] }
+                }
+            });
+
+            if (participantResidence) {
+                res.status(400).json({ error: 'El participante ya se encuentra en la residencia' });
+                return;
+            }
+
             await prisma.participant_residence.create({
                 data: {
                     participant_id: parseInt(participant_id),
@@ -202,6 +215,19 @@ export class ResidenceController {
 
             if (!participant) {
                 res.status(404).json({ error: 'Participante no encontrado' });
+                return;
+            }
+
+            const participantResidenceExists = await prisma.participant_residence.findFirst({
+                where: {
+                    participant_id: parseInt(participant_id),
+                    residence_id: parseInt(residence_id),
+                    status: { in: ['Residencia en Curso', 'Pendiente de Salida', 'Pendiente de Admision'] }
+                }
+            });
+
+            if (!participantResidenceExists) {
+                res.status(404).json({ error: 'El participante no se encuentra en la residencia' });
                 return;
             }
 
