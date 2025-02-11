@@ -1,12 +1,33 @@
 import { PrismaClient } from '@prisma/client';
 import { diseases } from './data/diseases';
+import { users } from './data/users';
+import { generateToken } from '../src/utils/token';
+import { hashPassword } from '../src/utils/auth';
 
 const prisma = new PrismaClient();
 
 async function main() {
   try {
-
     
+    users.map(async (user) => {
+
+        const generatedPassword = generateToken()
+        
+        const createdUser = await prisma.users.create({
+            data: {
+          ...user,
+          password: await hashPassword(generatedPassword),
+            },
+        })
+
+        await prisma.role_user.create({
+            data: {
+                role_id: 3,
+                user_id: createdUser.id
+            }
+        })
+    },)
+
     await prisma.diseases.createMany({
         data: diseases
     })

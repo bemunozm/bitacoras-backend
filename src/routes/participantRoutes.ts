@@ -3,6 +3,7 @@ import { body, param } from "express-validator";
 import { handleInputErrors } from "../middleware/validation";
 import { authenticate } from "../middleware/auth";
 import { ParticipantController } from "../controllers/ParticipantController";
+import { validateRole } from "../middleware/role-validator";
 
 const router = Router();
 
@@ -15,6 +16,7 @@ router.get('/get/:id/diseases',
 )
 
 router.post('/create',
+    validateRole(['Administrador', 'Monitor']),
     body('name').notEmpty().withMessage('El nombre no puede ir vacío'),
     body('run').notEmpty().withMessage('El RUN no puede ir vacío'),
     ParticipantController.createParticipant
@@ -38,18 +40,21 @@ router.get('/get/:id/populated',
 )
 
 router.put('/update/:id',
+    validateRole(['Administrador', 'Monitor']),
     param('id').isNumeric().withMessage('El ID debe ser un número').notEmpty().withMessage('El ID no puede ir vacío'),
     handleInputErrors,
     ParticipantController.updateParticipant
 );
 
 router.delete('/delete/:id',
+    validateRole(['Administrador', 'Monitor']),
     param('id').isNumeric().withMessage('El ID debe ser un número').notEmpty().withMessage('El ID no puede ir vacío'),
     handleInputErrors,
     ParticipantController.deleteParticipant
 );
 
 router.post('/deliver-benefits',
+    validateRole(['Administrador', 'Monitor']),
     body('participant_id').isNumeric().withMessage('El ID del participante debe ser un número').notEmpty().withMessage('El ID del participante no puede ir vacío'),
     body('benefits').isArray().withMessage('Los beneficios deben ser un arreglo').notEmpty().withMessage('Los beneficios no pueden ir vacíos'),
     body('date')
@@ -61,12 +66,13 @@ router.post('/deliver-benefits',
 )
 
 router.delete('/remove-delivered-benefits',
-
+    validateRole(['Administrador', 'Monitor']),
     handleInputErrors,
     ParticipantController.deleteDeliveredBenefits
 )
 
 router.put('/update-delivered-benefits/:id',
+    validateRole(['Administrador', 'Monitor']),
     param('id')
         .isNumeric().withMessage('El ID debe ser un número').notEmpty().withMessage('El ID no puede ir vacío'),
     body('date')

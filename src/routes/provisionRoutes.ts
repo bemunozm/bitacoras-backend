@@ -3,12 +3,14 @@ import { body, param } from "express-validator";
 import { handleInputErrors } from "../middleware/validation";
 import { authenticate } from "../middleware/auth";
 import { ProvisionController } from "../controllers/ProvisionController";
+import { validateRole } from "../middleware/role-validator";
 
 const router = Router();
 
 router.use(authenticate);
 
 router.post('/create',
+    validateRole(['Administrador', 'Monitor']),
     body('name').notEmpty().withMessage('El nombre no puede ir vacío'),
     body('provision_category_id').isNumeric().withMessage('El ID de la categoría debe ser un número').notEmpty().withMessage('El ID de la categoría no puede ir vacío'),
     handleInputErrors,
@@ -27,12 +29,14 @@ router.get('/get/:id',
 );
 
 router.put('/update/:id',
+    validateRole(['Administrador', 'Monitor']),
     param('id').isNumeric().withMessage('El ID debe ser un número').notEmpty().withMessage('El ID no puede ir vacío'),
     handleInputErrors,
     ProvisionController.updateProvision
 );
 
 router.delete('/delete/:id',
+    validateRole(['Administrador', 'Monitor']),
     param('id').isNumeric().withMessage('El ID debe ser un número').notEmpty().withMessage('El ID no puede ir vacío'),
     handleInputErrors,
     ProvisionController.deleteProvision

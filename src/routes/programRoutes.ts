@@ -14,6 +14,8 @@ router.post('/create',
     validateRole(['Administrador']),
     body('name')
         .notEmpty().withMessage('El nombre no puede ir vacio'),
+    body('coordinator_id')
+        .notEmpty().withMessage('El coordinador no puede ir vacio'),
     handleInputErrors,
     ProgramController.createProgram
 )

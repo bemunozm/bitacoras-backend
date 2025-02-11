@@ -122,7 +122,7 @@ model programs {
 
 model activities {
   id        Int    @id @default(autoincrement())
-  description String
+  description String @db.LongText
   date       DateTime
   bitacora_id Int
   category_id Int
@@ -136,7 +136,7 @@ model activities {
 model categories {
   id        Int    @id @default(autoincrement())
   name      String
-  description String
+  description String @db.LongText
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   activities activities[]
@@ -199,7 +199,7 @@ model disease_participant {
 model diseases {
   id        Int    @id @default(autoincrement())
   name      String
-  description String?
+  description String? @db.LongText
   type      String
   treatment_required Boolean @default(false)
   contagious Boolean @default(false)
@@ -212,7 +212,7 @@ model diseases {
 model events {
   id        Int    @id @default(autoincrement())
   date      DateTime
-  description String
+  description String @db.LongText
   type      String
   participant_id Int
   created_at DateTime @default(now())

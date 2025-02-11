@@ -47,7 +47,7 @@ router.delete('/delete/:id',
 )
 
 router.post('/participant-entrance',
-    validateRole(['Administrador']),
+    validateRole(['Administrador', 'Monitor']),
     body('residence_id')
         .notEmpty().withMessage('El id de la residencia no puede ir vacio'),
     body('participant_id')
@@ -61,7 +61,7 @@ router.post('/participant-entrance',
 )
 
 router.post('/participant-departure',
-    validateRole(['Administrador']),
+    validateRole(['Administrador', 'Monitor']),
     body('residence_id')
         .notEmpty().withMessage('El id de la residencia no puede ir vacio'),
     body('participant_id')
