@@ -55,6 +55,7 @@ export class AuthController {
                 }
             })
 
+            //ENVIAR CORREO ELECTRONICO DE CONFIRMACION
             AuthEmail.sendConfirmationEmail({
                 email: user.email,
                 name: user.name,
