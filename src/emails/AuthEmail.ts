@@ -1,19 +1,19 @@
-import { transporter } from "../config/nodemailer"
+import { transporter } from "../config/nodemailer";
 
 interface IEmail {
-    email: string
-    name: string
-    token: string
+  email: string;
+  name: string;
+  token: string;
 }
 
 export class AuthEmail {
-    static sendConfirmationEmail = async ( user : IEmail ) => {
-        const info = await transporter.sendMail({
-            from: 'Fundación Trabaja UNAP <no-reply@ftu.com>',
-            to: user.email,
-            subject: 'FTU - Confirma tu cuenta',
-            text: 'FTU - Confirma tu cuenta',
-            html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  static sendConfirmationEmail = async (user: IEmail) => {
+    const info = await transporter.sendMail({
+      from: "Fundación Trabaja UNAP <no-reply@ftu.com>",
+      to: user.email,
+      subject: "FTU - Confirma tu cuenta",
+      text: "FTU - Confirma tu cuenta",
+      html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="es">
  <head>
   <meta charset="UTF-8">
@@ -179,19 +179,19 @@ a[x-apple-data-detectors],
   </div>
  </body>
 </html>
-            `
-        })
+            `,
+    });
 
-        console.log('Mensaje enviado', info.messageId)
-    }
+    console.log("Mensaje enviado", info.messageId);
+  };
 
-    static sendPasswordResetToken = async ( user : IEmail ) => {
-        const info = await transporter.sendMail({
-            from: 'Fundación Trabaja UNAP <no-reply@ftu.com>',
-            to: user.email,
-            subject: 'FTU - Reestablece tu password',
-            text: 'FTU - Reestablece tu password',
-            html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  static sendPasswordResetToken = async (user: IEmail) => {
+    const info = await transporter.sendMail({
+      from: "Fundación Trabaja UNAP <no-reply@ftu.com>",
+      to: user.email,
+      subject: "FTU - Reestablece tu password",
+      text: "FTU - Reestablece tu password",
+      html: `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="es">
  <head>
   <meta charset="UTF-8">
@@ -368,19 +368,19 @@ a[x-apple-data-detectors],
   </div>
  </body>
 </html>
-            `
-        })
+            `,
+    });
 
-        console.log('Mensaje enviado', info.messageId)
-    }
+    console.log("Mensaje enviado", info.messageId);
+  };
 
-    static sendWelcomeEmail = async (user: IEmail) => {
-        const info = await transporter.sendMail({
-            from: 'Fundación Trabaja UNAP <no-reply@ftu.com>',
-            to: user.email,
-            subject: '¡Bienvenido al equipo de Fundación Trabaja UNAP!',
-            text: 'Bienvenido al equipo de Fundación Trabaja UNAP',
-            html: `
+  static sendWelcomeEmail = async (user: IEmail) => {
+    const info = await transporter.sendMail({
+      from: "Fundación Trabaja UNAP <no-reply@ftu.com>",
+      to: user.email,
+      subject: "¡Bienvenido al equipo de Fundación Trabaja UNAP!",
+      text: "Bienvenido al equipo de Fundación Trabaja UNAP",
+      html: `
                 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="es">
  <head>
@@ -547,8 +547,8 @@ a[x-apple-data-detectors],
  </body>
 </html>
             `,
-        });
-    
-        console.log('Mensaje enviado', info.messageId);
-    };
+    });
+
+    console.log("Mensaje enviado", info.messageId);
+  };
 }
