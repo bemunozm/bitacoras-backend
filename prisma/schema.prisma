@@ -27,18 +27,18 @@ model users {
   name      String
   run       String   @unique
   job_position String?
-  email     String   @unique
+  email     String?   @unique
   phone     String?
-  password  String
+  password  String?
   profile_image String?
   is_confirmed Boolean @default(false)
+  is_replacement Boolean @default(false)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   roles     role_user[] 
-  residences residence_user[]
   bitacoras  bitacoras[]
   tokens    tokens[]
-  programs  programs[]
+  programs program_user[]  
 }
 
 model role_user {
@@ -60,28 +60,6 @@ model roles {
   users     role_user[]
 }
 
-model residence_user {
-  id           Int   @id @default(autoincrement())
-  residence_id Int
-  user_id      Int
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  users         users      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  residences    residences @relation(fields: [residence_id], references: [id], onDelete: Cascade)
-}
-
-model residences {
-  id        Int   @id @default(autoincrement())
-  name      String
-  address   String
-  capacity  Int
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  users     residence_user[]
-  programs program_residence[]
-  participants participant_residence[]
-}
-
 model bitacoras {
   id           Int    @id @default(autoincrement())
   month        DateTime @default(now())
@@ -91,19 +69,21 @@ model bitacoras {
   status       String   @default("En Progreso")
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
-  users         users      @relation(fields: [user_id], references: [id])
-  programs      programs   @relation(fields: [program_id], references: [id])
+  user         users      @relation(fields: [user_id], references: [id])
+  program      programs   @relation(fields: [program_id], references: [id])
   activities    activities[]
 }
 
-model program_residence {
-  id           Int   @id @default(autoincrement())
+model program_user {
+  id        Int   @id @default(autoincrement())
   program_id   Int
-  residence_id Int
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  programs     programs   @relation(fields: [program_id], references: [id], onDelete: Cascade)
-  residences   residences @relation(fields: [residence_id], references: [id], onDelete: Cascade)
+  user_id   Int
+  turn      String?
+  is_coordinator Boolean @default(false)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  user      users  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  program   programs  @relation(fields: [program_id], references: [id], onDelete: Cascade)
 }
 
 model programs {
@@ -112,12 +92,10 @@ model programs {
   company  String
   address   String
   state     String
-  coordinator_id   Int
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  coordinator     users @relation(fields: [coordinator_id], references: [id])
-  residences      program_residence[]
   bitacoras  bitacoras[]
+  users program_user[]
 }
 
 model activities {
@@ -128,8 +106,8 @@ model activities {
   category_id Int
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  bitacoras  bitacoras  @relation(fields: [bitacora_id], references: [id])
-  categories categories @relation(fields: [category_id], references: [id])
+  bitacora  bitacoras  @relation(fields: [bitacora_id], references: [id])
+  category categories @relation(fields: [category_id], references: [id])
   attachments attachments[]
 }
 
@@ -150,104 +128,4 @@ model attachments {
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
   activity  activities @relation(fields: [activity_id], references: [id], onDelete: Cascade)
-}
-
-model participant_residence {
-  id           Int   @id @default(autoincrement())
-  residence_id Int
-  participant_id Int
-  admission_date DateTime @default(now())
-  departure_date DateTime?
-  status       String
-  admission_notes        String?
-  departure_notes        String?
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  residences   residences @relation(fields: [residence_id], references: [id], onDelete: Cascade)
-  participants participants @relation(fields: [participant_id], references: [id], onDelete: Cascade)
-}
-
-model participants {
-  id        Int    @id @default(autoincrement())
-  name      String
-  run       String  @unique
-  gender    String
-  birthdate DateTime?
-  nationality String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  residences participant_residence[]
-  events       events[]
-  diseases     disease_participant[]
-  provisions participant_provision[]
-}
-
-model disease_participant {
-  id        Int    @id @default(autoincrement())
-  participant_id Int
-  disease_id Int
-  date     DateTime
-  treatment_status   String
-  comments  String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  participants participants @relation(fields: [participant_id], references: [id], onDelete: Cascade)
-  diseases diseases @relation(fields: [disease_id], references: [id], onDelete: Cascade)
-}
-
-
-model diseases {
-  id        Int    @id @default(autoincrement())
-  name      String
-  description String? @db.LongText
-  type      String
-  treatment_required Boolean @default(false)
-  contagious Boolean @default(false)
-  notes     String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  participants disease_participant[]
-}
-
-model events {
-  id        Int    @id @default(autoincrement())
-  date      DateTime
-  description String @db.LongText
-  type      String
-  participant_id Int
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  participant participants @relation(fields: [participant_id], references: [id], onDelete: Cascade)
-}
-
-model participant_provision {
-  id       Int    @id @default(autoincrement())
-  participant_id Int
-  provision_id Int
-  date     DateTime
-  turn String
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  participant participants @relation(fields: [participant_id], references: [id], onDelete: Cascade)
-  provision provisions @relation(fields: [provision_id], references: [id], onDelete: Cascade)
-}
-
-model provisions {
-  id        Int    @id @default(autoincrement())
-  name      String
-  description String?
-  provision_category_id Int
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  category provision_categories @relation(fields: [provision_category_id], references: [id], onDelete: Cascade)
-  participants participant_provision[]
-}
-
-model provision_categories {
-  id        Int    @id @default(autoincrement())
-  name      String
-  description String?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  provisions provisions[]
 }

@@ -90,7 +90,8 @@ export class AuthController {
 
             const user = await prisma.users.findUnique({
                 where: {
-                    id: tokenExists.user_id
+                    id: tokenExists.user_id,
+                    is_replacement: false
                 }
             })
 
@@ -108,7 +109,8 @@ export class AuthController {
 
             await prisma.users.update({
                 where: {
-                    id: user.id
+                    id: user.id,
+                    is_replacement: false
                 },
                 data: {
                     is_confirmed: true
@@ -132,7 +134,8 @@ export class AuthController {
             const { email, password } = req.body
             const user = await prisma.users.findFirst({
                 where: {
-                    email
+                    email,
+                    is_replacement: false
                 }
             })
 
@@ -183,7 +186,8 @@ export class AuthController {
 
             const user = await prisma.users.findFirst({
                 where: {
-                    email
+                    email,
+                    is_replacement: false
                 }
             })
             if (!user) {
@@ -224,7 +228,8 @@ export class AuthController {
 
             const user = await prisma.users.findFirst({
                 where: {
-                    email
+                    email,
+                    is_replacement: false
                 }
             })
             if (!user) {
@@ -297,7 +302,8 @@ export class AuthController {
 
             const user = await prisma.users.findUnique({
                 where: {
-                    id: tokenExists.user_id
+                    id: tokenExists.user_id,
+                    is_replacement: false
                 }
             })
 
@@ -311,7 +317,8 @@ export class AuthController {
 
             await prisma.users.update({
                 where: {
-                    id: user.id
+                    id: user.id,
+                    is_replacement: false
                 },
                 data: {
                     password: passwordHash,
@@ -342,7 +349,8 @@ export class AuthController {
 
         const userExists = await prisma.users.findFirst({
             where: {
-                email
+                email,
+                is_replacement: false
             }
         })
         if (userExists && userExists.id.toString() !== req.user.id.toString()) {
@@ -400,7 +408,8 @@ export class AuthController {
 
         const user = await prisma.users.findUnique({
             where: {
-                id: req.user.id
+                id: req.user.id,
+                is_replacement: false
             }
         })
 

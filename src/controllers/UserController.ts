@@ -287,5 +287,109 @@ export class UserController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    static async createReplacement(req: Request, res: Response) {
+
+        const { name, run, email, phone } = req.body;
     
+        try {
+
+            const userExists = await prisma.users.findFirst({
+                where: {
+                    OR: [
+                        { email },
+                        { run }
+                    ]
+                }
+            });
+
+            if (userExists) {
+                res.status(400).json({ error: 'El usuario ya existe' });
+                return;
+            }
+
+            const replacement = await prisma.users.create({
+                data: {
+                    name,
+                    run,
+                    email,
+                    phone,
+                    is_replacement: true
+                }
+            });
+
+            if (!replacement) {
+                res.status(400).json({ error: 'No se pudo crear el reemplazo' });
+                return;
+            }
+    
+            res.send(`El reemplazo ha sido creado con éxito`);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    static async getReplacements(req: Request, res: Response) {
+
+        try {
+            const replacements = await prisma.users.findMany({
+                where: {
+                    is_replacement: true
+                }
+            });
+
+            res.status(200).json(replacements);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    static async getReplacement(req: Request, res: Response) {
+
+        const { id } = req.params;
+
+        try {
+            const replacement = await prisma.users.findUnique({
+                where: {
+                    id: Number(id),
+                    is_replacement: true
+                }
+            });
+
+            if (!replacement) {
+                res.status(404).json({ error: 'No se encontró el reemplazo' });
+                return;
+            }
+
+            res.status(200).json(replacement);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    static async updateReplacement(req: Request, res: Response) {
+            
+            const { id } = req.params;
+        
+            try {
+                const { name, run, email, phone } = req.body;
+        
+                const replacement = await prisma.users.update({
+                    where: {
+                        id: Number(id),
+                        is_replacement: true
+                    },
+                    data: {
+                        name,
+                        run,
+                        email,
+                        phone
+                    }
+                });
+        
+                res.send(`El reemplazo ha sido actualizado con éxito`);
+            } catch (error) {
+                res.status(500).json({ error: error.message });
+            }
+        }   
 }

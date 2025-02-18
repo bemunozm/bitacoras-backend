@@ -44,10 +44,10 @@ export class BitacoraController {
                 data: {
                     month,
                     recipe,
-                    programs: {
+                    program: {
                         connect: { id: program_id }
                     },
-                    users: {
+                    user: {
                         connect: { id: user_id }
                     },
                 }
@@ -67,12 +67,11 @@ export class BitacoraController {
 
             const bitacoras = await prisma.bitacoras.findMany({
                 include: {
-                    programs: {
+                    program: {
                         include: {
-                            coordinator: true,
-                            residences: {
+                            users: {
                                 include: {
-                                    residences: true
+                                    user: true
                                 }
                             },
                         }
@@ -80,23 +79,14 @@ export class BitacoraController {
                     activities: {
                         include: {
                             attachments: true,
-                            categories: true
+                            category: true
                         }
                     },
-                    users: true,
+                    user: true,
                 }
             });
 
-            const bitacorasWithResidences = bitacoras.map(bitacora => ({
-                ...bitacora,
-                programs: {
-                    ...bitacora.programs,
-                    residences: bitacora.programs.residences.map(residence => residence.residences)
-                }
-            }));
-
-
-            res.status(200).json(bitacorasWithResidences);
+            res.status(200).json(bitacoras);
             
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -152,35 +142,22 @@ export class BitacoraController {
                     }
                 },
                 include: {
-                    programs: {
+                    program: {
                         include: {
-                            coordinator: true,
-                            residences: {
-                                include: {
-                                    residences: true
-                                }
-                            },
+                            users: true,
                         }
                     },
                     activities: {
                         include: {
                             attachments: true,
-                            categories: true
+                            category: true
                         }
                     },
-                    users: true,
+                    user: true,
                 }
             });
 
-            const bitacorasWithResidences = bitacoras.map(bitacora => ({
-                ...bitacora,
-                programs: {
-                    ...bitacora.programs,
-                    residences: bitacora.programs.residences.map(residence => residence.residences)
-                }
-            }));
-
-            res.status(200).json(bitacorasWithResidences);
+            res.status(200).json(bitacoras);
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
@@ -195,12 +172,11 @@ export class BitacoraController {
             const bitacora = await prisma.bitacoras.findUnique({
                 where: { id: parseInt(id) },
                 include: {
-                    programs: {
+                    program: {
                         include: {
-                            coordinator: true,
-                            residences: {
+                            users: {
                                 include: {
-                                    residences: true
+                                    user: true
                                 }
                             },
                         }
@@ -208,10 +184,18 @@ export class BitacoraController {
                     activities: {
                         include: {
                             attachments:true,
-                            categories: true
+                            category: true
                         }
                     },
-                    users: true,
+                    user: {
+                        include: {
+                            roles: {
+                                include: {
+                                    roles: true
+                                }
+                            }
+                        }
+                    },
                 }
             });
 
@@ -223,16 +207,13 @@ export class BitacoraController {
                 return;
             }
 
-            const bitacoraWithResidences = {
-                ...bitacora,
-                programs: {
-                    ...bitacora.programs,
-                    residences: bitacora.programs.residences.map(residence => residence.residences)
-                }
-            };
+            const bitacoraUserWithRoles = {
+                ...bitacora.user,
+                roles: bitacora.user.roles.map((role) => role.roles)
+            }
 
 
-            res.status(200).json(bitacoraWithResidences);
+            res.status(200).json({ ...bitacora, user: bitacoraUserWithRoles });
 
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -266,7 +247,7 @@ export class BitacoraController {
                     month: req.body.month,
                     recipe: req.body.recipe,
                     status: req.body.status,
-                    programs: {
+                    program: {
                         connect: { id: req.body.program_id }
                     }
                 }

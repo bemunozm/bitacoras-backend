@@ -56,6 +56,34 @@ router.get('/coordinators',
     UserController.getCoordinators
 )
 
+router.post('/create-replacement',
+    validateRole(['Administrador', 'Coordinador']),
+    body('run')
+        .notEmpty().withMessage('El run no puede ir vacio'),
+    body('name')
+        .notEmpty().withMessage('El nombre no puede ir vacio'),
+    handleInputErrors,
+    UserController.createReplacement
+)
+
+router.get('/get-replacements',
+    handleInputErrors,
+    UserController.getReplacements
+)
+
+router.get('/get-replacement/:id',
+    param('id')
+        .notEmpty().withMessage('El id no puede ir vacio'),
+    handleInputErrors,
+    UserController.getReplacement
+)
+
+router.put('/update-replacement/:id',
+    param('id')
+        .notEmpty().withMessage('El id no puede ir vacio'),
+    handleInputErrors,
+    UserController.updateReplacement
+)
 
 
 export default router;

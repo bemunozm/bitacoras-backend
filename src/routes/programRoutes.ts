@@ -48,4 +48,34 @@ router.delete('/delete/:id',
     ProgramController.deleteProgram
 )
 
+router.post('/associate',
+    validateRole(['Administrador', 'Coordinador']),	
+    body('program_id')
+        .notEmpty().withMessage('El programa no puede ir vacio'),
+    body('user_id')
+        .notEmpty().withMessage('El usuario no puede ir vacio'),
+    body('turn')
+        .notEmpty().withMessage('El turno no puede ir vacio'),
+    handleInputErrors,
+    ProgramController.associateUser
+)
+
+router.delete('/disassociate/:id',
+    validateRole(['Administrador', 'Coordinador']),
+    param('id')
+        .notEmpty().withMessage('El id no puede ir vacio'),
+    handleInputErrors,
+    ProgramController.disassociateUser
+)
+
+router.put('/update-association/:id',
+    validateRole(['Administrador', 'Coordinador']),
+    param('id')
+        .notEmpty().withMessage('El id no puede ir vacio'),
+    body('turn')
+        .notEmpty().withMessage('El turno no puede ir vacio'),
+    handleInputErrors,
+    ProgramController.updateAssociation
+)
+
 export default router;

@@ -1,4 +1,4 @@
-import { users, residences, roles } from '@prisma/client'
+import { users, roles, programs } from '@prisma/client'
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
 import prisma from '../config/db'
@@ -6,7 +6,7 @@ import prisma from '../config/db'
 declare global {
     namespace Express {
         interface Request {
-            user?: users & { roles: roles[], residences: residences[]}	
+            user?: users & { roles: roles[], programs: programs[]}	
         }
     }
 }
@@ -34,9 +34,9 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
                         }
                     },
 
-                    residences: {
+                    programs: {
                         include: {
-                            residences: true
+                            program: true
                         }
                     }
                 }
@@ -46,9 +46,9 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
             if(user) {
 
                 const roles = user.roles.map(role => role.roles)
-                const residences = user.residences.map(residence => residence.residences)
+                const programs = user.programs.map(program => program.program)
 
-                req.user = {...user, roles, residences}
+                req.user = {...user, roles, programs}
                 
                 next()
             } else {

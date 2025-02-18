@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import { diseases } from './data/diseases';
 import { users } from './data/users';
 import { generateToken } from '../src/utils/token';
 import { hashPassword } from '../src/utils/auth';
@@ -27,10 +26,6 @@ async function main() {
             }
         })
     },)
-
-    await prisma.diseases.createMany({
-        data: diseases
-    })
     
   } catch (error) {
     console.log(error)

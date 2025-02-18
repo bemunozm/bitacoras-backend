@@ -5,8 +5,7 @@ const roles = [
     {name: 'Administrador'},
     {name: 'Coordinador'},
     {name: 'Usuario'},
-    {name: 'Auditor'},
-    {name: 'Monitor'}
+    {name: 'Administrativo'}
 ]
 
 export async function setupRoles() {

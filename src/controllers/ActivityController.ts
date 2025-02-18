@@ -75,7 +75,7 @@ export class ActivityController {
 
             const activities = await prisma.activities.findMany({
                 include: {
-                    categories: true,
+                    category: true,
                     attachments: true
                 }
             });
@@ -97,7 +97,7 @@ export class ActivityController {
             const activity = await prisma.activities.findUnique({
                 where: { id: +id },
                 include: {
-                    categories: true,
+                    category: true,
                     attachments: true
                 }
             });
@@ -123,6 +123,7 @@ export class ActivityController {
             const files = req.files as Express.Multer.File[];
 
             const { description, date, category_id, existingAttachments } = req.body;
+            
 
             console.log('🚨 Imagenes existentes', existingAttachments)
             console.log('🚨 Archivos nuevos', files)
@@ -304,7 +305,7 @@ export class ActivityController {
             const activities = await prisma.activities.findMany({
                 where: { bitacora_id: Number(id) },
                 include: {
-                    categories: true,
+                    category: true,
                     attachments: true
                 }
             });
