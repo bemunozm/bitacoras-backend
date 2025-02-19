@@ -249,7 +249,82 @@ export class UserController {
         const { id } = req.params;
     
         try {
-            
+
+            // Verificar que el usuario exista
+            const user = await prisma.users.findUnique({
+                where: {
+                    id: Number(id)
+                }
+            });
+
+            if (!user) {
+                res.status(404).json({ error: 'Usuario no encontrado' });
+                return;
+            }
+
+            if (user.is_replacement) {
+                //Eliminar todos los datos asociados y luego el usuario
+                await prisma.tokens.deleteMany({
+                    where: {
+                        user_id: Number(id)
+                    }
+                });
+
+                await prisma.role_user.deleteMany({
+                    where: {
+                        user_id: Number(id)
+                    }
+                });
+
+                await prisma.program_user.deleteMany({
+                    where: {
+                        user_id: Number(id)
+                    }
+                });
+
+                const bitacoras = await prisma.bitacoras.findMany({
+                    where: {
+                        user_id: Number(id)
+                    }
+                });
+
+                for (const bitacora of bitacoras) {
+                    await prisma.activities.deleteMany({
+                        where: {
+                            bitacora_id: bitacora.id
+                        }
+                    });
+                }
+
+                await prisma.bitacoras.deleteMany({
+                    where: {
+                        user_id: Number(id)
+                    }
+                });
+
+                await prisma.users.delete({
+                    where: {
+                        id: Number(id)
+                    }
+                });
+
+                res.send(`El remplazo ha sido eliminado con
+                éxito`);
+                return;
+            }
+
+            // Verificar que no tenga bitácoras asociadas
+            const bitacoras = await prisma.bitacoras.findMany({
+                where: {
+                    user_id: Number(id)
+                }
+            });
+
+            if (bitacoras.length > 0) {
+                res.status(400).json({ error: 'No se puede eliminar el usuario porque tiene bitácoras asociadas' });
+                return;
+            }
+ 
             // Luego eliminar el usuario
             await prisma.users.delete({
                 where: {

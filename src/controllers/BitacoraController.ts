@@ -144,7 +144,11 @@ export class BitacoraController {
                 include: {
                     program: {
                         include: {
-                            users: true,
+                            users: {
+                                include: {
+                                    user: true
+                                }
+                            },
                         }
                     },
                     activities: {
