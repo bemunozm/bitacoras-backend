@@ -6,6 +6,12 @@ interface IEmail {
   token: string;
 }
 
+/**
+ * Servicio de envío de correos electrónicos para autenticación
+ * Incluye funciones para enviar emails de confirmación de cuenta,
+ * restablecimiento de contraseña y bienvenida a nuevos usuarios
+ */
+
 export class AuthEmail {
   static sendConfirmationEmail = async (user: IEmail) => {
     const info = await transporter.sendMail({

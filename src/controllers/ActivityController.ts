@@ -1,18 +1,27 @@
 import type { Request, Response } from 'express';
 import prisma from '../config/db';
-
 import {v2 as cloudinary} from 'cloudinary';
 
+/**
+ * Controlador para manejar todas las operaciones relacionadas con actividades
+ * Incluye crear, actualizar, eliminar y consultar actividades con sus archivos adjuntos
+ */
 export class ActivityController {
-
+    /**
+     * Crea una nueva actividad en una bitácora específica
+     * @param req.body.description Descripción de la actividad
+     * @param req.body.date Fecha de la actividad
+     * @param req.body.bitacora_id ID de la bitácora asociada
+     * @param req.body.category_id ID de la categoría
+     * @param req.files Archivos adjuntos (opcional)
+     * @returns Mensaje de confirmación de creación
+     */
     static async createActivity(req: Request, res: Response) {
-        
-        try{
-
-
-            const { description, date, bitacora_id, category_id} = req.body
+        try {
+            const { description, date, bitacora_id, category_id} = req.body;
             const files = req.files as Express.Multer.File[];
-
+            
+            //Obtener y validar que la bitacora existe
             const bitacora = await prisma.bitacoras.findUnique({
                 where: { id: +bitacora_id }
             });
@@ -22,6 +31,7 @@ export class ActivityController {
                 return;
             }
 
+//Obtener y validar que la categoría existe
             const category = await prisma.categories.findUnique({
                 where: { id: +category_id }
             });
@@ -36,10 +46,11 @@ export class ActivityController {
             const activityMonth = new Date(date).getMonth();
 
             if (bitacoraMonth !== activityMonth) {
-                res.status(400).json({ error: 'La fecha de la actividad no coincide con el mes de la bitácora' });
+                res.status(400).json({ error: 'La fecha de la actividad debe corresponder al mes de la bitácora' });
                 return;
             }
 
+            //Crear la actividad
             const activity = await prisma.activities.create({
                 data: {
                     description,
@@ -49,86 +60,39 @@ export class ActivityController {
                 }
             });
 
+            //Si hay archivos adjuntos, guardarlos y asociarlos a la actividad
             if (files && files.length > 0) {
 
                 const attachmentsData = files.map((file) => ({
                     image: file.path,
                     activity_id: activity.id,
                 }));
-
-    
                 await prisma.attachments.createMany({ data: attachmentsData });
             }
 
-
             res.send('Actividad creada correctamente');
-
         } catch(error) {
             res.status(500).json({ error: error.message });
         }
-
     }
 
-    static async getActivities(req: Request, res: Response) {
-
-        try {
-
-            const activities = await prisma.activities.findMany({
-                include: {
-                    category: true,
-                    attachments: true
-                }
-            });
-
-            res.json(activities);
-
-        } catch(error) {
-            res.status(500).json({ error: error.message });
-        }
-
-    }
-
-    static async getActivity(req: Request, res: Response) {
-
-        try {
-
-            const { id } = req.params;
-
-            const activity = await prisma.activities.findUnique({
-                where: { id: +id },
-                include: {
-                    category: true,
-                    attachments: true
-                }
-            });
-
-            if (!activity) {
-                res.status(404).json({ error: 'Actividad no encontrada' });
-                return;
-            }
-
-            res.json(activity);
-
-        } catch(error) {
-            res.status(500).json({ error: error.message });
-        }
-
-    }
-
+    /**
+     * Actualiza una actividad existente y sus archivos adjuntos
+     * @param req.params.id ID de la actividad
+     * @param req.body.description Nueva descripción
+     * @param req.body.date Nueva fecha
+     * @param req.body.category_id Nueva categoría
+     * @param req.body.existingAttachments Archivos adjuntos que se mantienen
+     * @param req.files Nuevos archivos adjuntos
+     * @returns Mensaje de confirmación de actualización
+     */
     static async updateActivity(req: Request, res: Response) {
-
         try {
-
             const { id } = req.params;
             const files = req.files as Express.Multer.File[];
-
             const { description, date, category_id, existingAttachments } = req.body;
-            
 
-            console.log('🚨 Imagenes existentes', existingAttachments)
-            console.log('🚨 Archivos nuevos', files)
-
-
+            // Verificar que la actividad exista
             const activity = await prisma.activities.findUnique({
                 where: { id: +id }
             });
@@ -156,86 +120,91 @@ export class ActivityController {
             const activityMonth = new Date(date).getMonth();
 
             if (bitacoraMonth !== activityMonth) {
-                res.status(400).json({ error: 'La fecha de la actividad no coincide con el mes de la bitácora' });
+                res.status(400).json({ error: 'La fecha de la actividad debe corresponder al mes de la bitácora' });
                 return;
             }
 
+            //Actualizar datos básicos de la actividad
             await prisma.activities.update({
                 where: { id: Number(id) },
-                data: {
-                    description,
-                    date,
-                    category_id: +category_id
-                }
+                data: { description, date, category_id: +category_id }
             });
 
             //Si no hay archivos existentes, eliminar todos los existentes
             if (!existingAttachments) {
-                
-                console.log('🚨Eliminando todos los archivos adjuntos')
-
-                const existingAttachments = await prisma.attachments.findMany({
+                //Si no se especifican archivos a mantener, eliminar todos
+                const attachments = await prisma.attachments.findMany({
                     where: { activity_id: Number(id) }
                 });
 
-                if (existingAttachments.length > 0) {
+                if (attachments.length > 0) {
                     await prisma.attachments.deleteMany({
-                        where: {
-                            activity_id: Number(id)
-                        }
+                        where: { activity_id: Number(id) }
                     });
 
-                    existingAttachments.forEach((attachment) => {
+                    //Eliminar archivos de Cloudinary
+                    attachments.forEach((attachment) => {
                         cloudinary.uploader.destroy(attachment.image.split('/').pop().split('.')[0]);
                     });
                 }
-            }
-
-            
-            // Manejar eliminación de archivos adjuntos
-            if (existingAttachments) {
-                const existingAttachmentsBD = await prisma.attachments.findMany({
+            } else {
+                //Eliminar solo los archivos que ya no están en la lista
+                const currentAttachments = await prisma.attachments.findMany({
                     where: { activity_id: Number(id) }
                 });
 
-                console.log('🚨 Imagenes existentes en BD', existingAttachmentsBD)
-
-                //Comparar los archivos existentes en la BD con los existentes para ver si se eliminaron
-                const attachmentsToDelete = existingAttachmentsBD.filter((attachment) => {
-                    console.log('Sigue existinedo?', existingAttachments.some((existingAttachment) => existingAttachment.id === attachment.id))
-                    return !existingAttachments.some((existingAttachment) => +existingAttachment.id === attachment.id);
-                });
-
-
-                console.log('🚨 Archivos a eliminar', attachmentsToDelete)
+                const attachmentsToDelete = currentAttachments.filter(
+                    attachment => !existingAttachments.some(
+                        existing => +existing.id === attachment.id
+                    )
+                );
 
                 if (attachmentsToDelete.length > 0) {
                     await prisma.attachments.deleteMany({
                         where: {
-                            id: { in: attachmentsToDelete.map((attachment) => attachment.id) }
+                            id: { in: attachmentsToDelete.map(a => a.id) }
                         }
                     });
 
+                    //Eliminar archivos de Cloudinary
                     attachmentsToDelete.forEach((attachment) => {
                         cloudinary.uploader.destroy(attachment.image.split('/').pop().split('.')[0]);
                     });
                 }
             }
 
-            
-
-            // Manejar archivos adjuntos
-            if (files && files.length > 0) {
-                const attachmentsData = files.map((file) => ({
-                    image: file.path,
-                    activity_id: Number(id),
-                }));
-
-                await prisma.attachments.createMany({ data: attachmentsData });
+            //Agregar nuevos archivos adjuntos
+            if (files?.length > 0) {
+                await prisma.attachments.createMany({
+                    data: files.map(file => ({
+                        image: file.path,
+                        activity_id: Number(id),
+                    }))
+                });
             }
 
-
             res.send('Actividad actualizada correctamente');
+        } catch(error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    /**
+     * Obtiene todas las actividades con sus categorías y archivos adjuntos
+     * @returns Lista de actividades con sus relaciones
+     */
+    static async getActivities(req: Request, res: Response) {
+
+        try {
+
+            const activities = await prisma.activities.findMany({
+                include: {
+                    category: true,
+                    attachments: true
+                }
+            });
+
+            res.json(activities);
 
         } catch(error) {
             res.status(500).json({ error: error.message });
@@ -243,6 +212,43 @@ export class ActivityController {
 
     }
 
+    /**
+     * Obtiene una actividad específica por su ID
+     * @param req.params.id ID de la actividad
+     * @returns Detalles de la actividad con sus relaciones
+     */
+    static async getActivity(req: Request, res: Response) {
+
+        try {
+
+            const { id } = req.params;
+
+            const activity = await prisma.activities.findUnique({
+                where: { id: +id },
+                include: {
+                    category: true,
+                    attachments: true
+                }
+            });
+
+            if (!activity) {
+                res.status(404).json({ error: 'Actividad no encontrada' });
+                return;
+            }
+
+            res.json(activity);
+
+        } catch(error) {
+            res.status(500).json({ error: error.message });
+        }
+
+    }
+
+    /**
+     * Elimina una actividad y sus archivos adjuntos
+     * @param req.params.id ID de la actividad
+     * @returns Mensaje de confirmación de eliminación
+     */
     static async deleteActivity(req: Request, res: Response) {
 
         try {
@@ -270,6 +276,7 @@ export class ActivityController {
                     }
                 });
 
+                //Eliminar los archivos de Cloudinary
                 attachments.forEach((attachment) => {
                     cloudinary.uploader.destroy(attachment.image.split('/').pop().split('.')[0]);
                 });
@@ -287,6 +294,11 @@ export class ActivityController {
 
     }
 
+    /**
+     * Obtiene todas las actividades de una bitácora específica
+     * @param req.params.id ID de la bitácora
+     * @returns Lista de actividades de la bitácora con sus relaciones
+     */
     static async getActivitiesByBitacora(req: Request, res: Response) {
 
         try {
@@ -302,6 +314,7 @@ export class ActivityController {
                 return;
             }
 
+            //Obtener todas las actividades de la bitácora con sus relaciones
             const activities = await prisma.activities.findMany({
                 where: { bitacora_id: Number(id) },
                 include: {
@@ -317,7 +330,4 @@ export class ActivityController {
         }
 
     }
-
-
-
 }

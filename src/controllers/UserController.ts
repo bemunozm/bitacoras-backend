@@ -5,20 +5,38 @@ import { generateToken } from '../utils/token';
 import { AuthEmail } from '../emails/AuthEmail';
 import { v2 as cloudinary } from 'cloudinary';
 
+/**
+ * Controlador para manejar todas las operaciones relacionadas con usuarios
+ * Incluye gestión de usuarios regulares y reemplazos
+ */
 export class UserController {
-
+    /**
+     * Crea un nuevo usuario con roles asignados
+     * @param req.body.run RUN del usuario
+     * @param req.body.name Nombre del usuario
+     * @param req.body.job_position Cargo del usuario
+     * @param req.body.email Email del usuario
+     * @param req.body.phone Teléfono del usuario
+     * @param req.body.roles Array de IDs de roles
+     * @param req.file Imagen de perfil (opcional)
+     * @returns Mensaje de confirmación y contraseña temporal
+     */
     static async createUser(req: Request, res: Response) {
     
         const { run, name, job_position, email, phone, roles } = req.body;
     
         try {
+            
+            // Generar contraseña temporal y hashearla
             const tempPassword = Math.random().toString(36).slice(-8);
             const hashedPassword = await hashPassword(tempPassword);
 
+            // Obtener roles a partir de los IDs
             let rolesData = roles ? roles.map(role => ({
                 role_id: +role
             })) : [];
 
+            // Si no se especifican roles, asignar el rol de Usuario por defecto
             if (!roles) {
                 const defaultRole = await prisma.roles.findFirst({
                     where: {
@@ -30,6 +48,7 @@ export class UserController {
                 }
             }
 
+            // Verificar si el usuario ya existe
             const userExists = await prisma.users.findFirst({
                 where: {
                     OR: [
@@ -43,7 +62,8 @@ export class UserController {
                 res.status(400).json({ error: 'El usuario ya existe' });
                 return;
             }
-    
+            
+            // Crear el usuario con los roles asociados
             const user = await prisma.users.create({
                 data: {
                     run,
@@ -84,6 +104,10 @@ export class UserController {
         }
     }
 
+    /**
+     * Obtiene todos los usuarios con sus roles
+     * @returns Lista de usuarios con sus roles asociados
+     */
     static async getUsers(req: Request, res: Response) {
         
 
@@ -98,6 +122,7 @@ export class UserController {
                 }
             });
 
+            // Mapear los roles de cada usuario para evitar la informacion de la tabla pivote
             const usersWithRoles = users.map(user => {
                 return {
                     ...user,
@@ -110,9 +135,13 @@ export class UserController {
         }
     }
 
+    /**
+     * Obtiene un usuario específico por su ID
+     * @param req.params.id ID del usuario
+     * @returns Detalles del usuario con sus roles
+     */
     static async getUserById(req: Request, res: Response) {
         
-
         const { id } = req.params;
 
         try {
@@ -129,6 +158,12 @@ export class UserController {
                 }
             });
 
+            if (!user) {
+                res.status(404).json({ error: 'Usuario no encontrado' });
+                return;
+            }
+
+            // Mapear los roles de cada usuario para evitar la informacion de la tabla pivote
             const userWithRoles = {
                 ...user,
                 roles: user.roles.map(role => role.roles)
@@ -140,13 +175,19 @@ export class UserController {
         }
     }
 
+    /**
+     * Actualiza los datos de un usuario existente
+     * @param req.params.id ID del usuario
+     * @param req.body Datos actualizados del usuario
+     * @param req.file Nueva imagen de perfil (opcional)
+     * @returns Mensaje de confirmación de actualización
+     */
     static async updateUser(req: Request, res: Response) {
 
         const { id } = req.params;
     
         try {
             const { run, name, job_position, email, phone, roles } = req.body;
-            console.log(req.file)
     
             // Obtener roles actuales del usuario
             const currentRoles = await prisma.role_user.findMany({
@@ -173,6 +214,7 @@ export class UserController {
                 }
             });
 
+            // Verificar si hay otro usuario con el mismo email o RUN
             const otherUserExists = await prisma.users.findFirst({
                 where: {
                     OR: [
@@ -227,7 +269,6 @@ export class UserController {
 
                 }
 
-                console.log(req.file.path)
                 await prisma.users.update({
                     where: {
                         id: +id
@@ -244,6 +285,11 @@ export class UserController {
         }
     }    
 
+    /**
+     * Elimina un usuario del sistema
+     * @param req.params.id ID del usuario
+     * @returns Mensaje de confirmación de eliminación
+     */
     static async deleteUser(req: Request, res: Response) {
 
         const { id } = req.params;
@@ -262,6 +308,7 @@ export class UserController {
                 return;
             }
 
+            // Verificar si el usuario es un reemplazo para eliminar todos los datos asociados
             if (user.is_replacement) {
                 //Eliminar todos los datos asociados y luego el usuario
                 await prisma.tokens.deleteMany({
@@ -313,6 +360,8 @@ export class UserController {
                 return;
             }
 
+            //Si el usuario no es un reemplazo, eliminar los roles asociados primero deberan eliminar todos los datos asociados de manera manual
+
             // Verificar que no tenga bitácoras asociadas
             const bitacoras = await prisma.bitacoras.findMany({
                 where: {
@@ -338,9 +387,12 @@ export class UserController {
         }
     }
 
+    /**
+     * Obtiene todos los usuarios con rol de Coordinador
+     * @returns Lista de coordinadores
+     */
     static async getCoordinators(req: Request, res: Response) {
         
-
         try {
             const coordinators = await prisma.users.findMany({
                 where: {
@@ -354,8 +406,6 @@ export class UserController {
                 }
             });
 
-            console.log('Cordinadores',coordinators);
-
             res.status(200).json(coordinators);
         } catch (error) {
             console.log(error)
@@ -363,12 +413,21 @@ export class UserController {
         }
     }
 
+    /**
+     * Crea un nuevo usuario de reemplazo
+     * @param req.body.name Nombre del reemplazo
+     * @param req.body.run RUN del reemplazo
+     * @param req.body.email Email del reemplazo
+     * @param req.body.phone Teléfono del reemplazo
+     * @returns Mensaje de confirmación de creación
+     */
     static async createReplacement(req: Request, res: Response) {
 
         const { name, run, email, phone } = req.body;
     
         try {
 
+            // Verificar si el usuario ya existe
             const userExists = await prisma.users.findFirst({
                 where: {
                     OR: [
@@ -382,7 +441,7 @@ export class UserController {
                 res.status(400).json({ error: 'El usuario ya existe' });
                 return;
             }
-
+            
             const replacement = await prisma.users.create({
                 data: {
                     name,
@@ -404,6 +463,10 @@ export class UserController {
         }
     }
 
+    /**
+     * Obtiene todos los usuarios de reemplazo
+     * @returns Lista de usuarios de reemplazo
+     */
     static async getReplacements(req: Request, res: Response) {
 
         try {
@@ -419,6 +482,11 @@ export class UserController {
         }
     }
 
+    /**
+     * Obtiene un usuario de reemplazo específico
+     * @param req.params.id ID del reemplazo
+     * @returns Detalles del usuario de reemplazo
+     */
     static async getReplacement(req: Request, res: Response) {
 
         const { id } = req.params;
@@ -442,6 +510,12 @@ export class UserController {
         }
     }
 
+    /**
+     * Actualiza los datos de un usuario de reemplazo
+     * @param req.params.id ID del reemplazo
+     * @param req.body Datos actualizados del reemplazo
+     * @returns Mensaje de confirmación de actualización
+     */
     static async updateReplacement(req: Request, res: Response) {
             
             const { id } = req.params;
