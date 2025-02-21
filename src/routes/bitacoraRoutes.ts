@@ -12,8 +12,6 @@ router.use(authenticate)
 router.post('/create',
     body('month')
         .notEmpty().withMessage('El nombre no puede ir vacio'),
-    body('recipe')
-        .notEmpty().withMessage('El numero de boleta no puede ir vacio'),
     body('user_id')
         .notEmpty().withMessage('El id de usuario no puede ir vacio'),
     body('program_id')
@@ -46,8 +44,6 @@ router.put('/update/:id',
         .notEmpty().withMessage('El id no puede ir vacio'),
     body('month')
         .notEmpty().withMessage('El nombre no puede ir vacio'),
-    body('recipe')
-        .notEmpty().withMessage('El numero de boleta no puede ir vacio'),
     body('user_id')
         .notEmpty().withMessage('El id de usuario no puede ir vacio'),
     body('program_id')

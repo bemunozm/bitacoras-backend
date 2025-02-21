@@ -56,7 +56,7 @@ export class BitacoraController {
             await prisma.bitacoras.create({
                 data: {
                     month,
-                    recipe,
+                    recipe: recipe ? +recipe : null,
                     program: {
                         connect: { id: program_id }
                     },
@@ -295,7 +295,7 @@ export class BitacoraController {
                 where: { id: parseInt(id) },
                 data: {
                     month: req.body.month,
-                    recipe: req.body.recipe,
+                    recipe: req.body.recipe ? +req.body.recipe : null,
                     status: req.body.status,
                     program: {
                         connect: { id: req.body.program_id }
@@ -366,6 +366,20 @@ export class BitacoraController {
         const { status } = req.body;
 
         try {
+
+            const bitacora = await prisma.bitacoras.findUnique({
+                where: { id: parseInt(id) }
+            });
+
+            if (!bitacora) {
+                res.status(404).json({ error: 'Bitácora no encontrada' });
+                return;
+            }
+
+            if ((status == 'Completado' || status == 'Aprobado') && bitacora.recipe == null && !req.user.roles.some((role: any) => role.name === 'Administrador')) {
+                res.status(400).json({ error: 'No se puede completar o aprobar una bitácora sin número de boleta o liquidación' });
+                return;
+            }
             
             await prisma.bitacoras.update({
                 where: { id: parseInt(id) },

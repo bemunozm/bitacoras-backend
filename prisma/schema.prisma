@@ -63,7 +63,7 @@ model roles {
 model bitacoras {
   id           Int    @id @default(autoincrement())
   month        DateTime @default(now())
-  recipe       String
+  recipe       Int?
   user_id      Int
   program_id   Int
   status       String   @default("En Progreso")

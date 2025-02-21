@@ -65,7 +65,7 @@ export class ProgramController {
                         create: {
                             user_id: coordinator_id,
                             is_coordinator: true,
-                            turn: null,
+                            turn: 'Diurno',
                         },
                     },
                 },
@@ -196,7 +196,7 @@ export class ProgramController {
                         create: {
                             user_id: coordinator_id,
                             is_coordinator: true,
-                            turn: null,
+                            turn: 'Diurno',
                         },
                     },
                 },

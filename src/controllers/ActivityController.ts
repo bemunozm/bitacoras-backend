@@ -41,9 +41,18 @@ export class ActivityController {
                 return;
             }
 
-            //Verificar que la fecha de la actividad sea dentro del mismo mes de la bitácora
-            const bitacoraMonth = new Date(bitacora.month).getMonth();
-            const activityMonth = new Date(date).getMonth();
+            //Verificar que la fecha de la actividad sea dentro del mismo mes y año de la bitácora
+            const bitacoraDate = new Date(bitacora.month);
+            const activityDate = new Date(date);
+            const bitacoraMonth = bitacoraDate.getMonth();
+            const bitacoraYear = bitacoraDate.getFullYear();
+            const activityMonth = activityDate.getMonth();
+            const activityYear = activityDate.getFullYear();
+
+            if (bitacoraMonth !== activityMonth || bitacoraYear !== activityYear) {
+                res.status(400).json({ error: 'La fecha de la actividad debe corresponder al mes y año de la bitácora' });
+                return;
+            }
 
             if (bitacoraMonth !== activityMonth) {
                 res.status(400).json({ error: 'La fecha de la actividad debe corresponder al mes de la bitácora' });

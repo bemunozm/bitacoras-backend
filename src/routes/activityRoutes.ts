@@ -16,7 +16,7 @@ router.post('/create',
     body('description')
         .notEmpty().withMessage('El nombre no puede ir vacio'),
     body('date')
-        .notEmpty().withMessage('El numero de boleta no puede ir vacio'),
+        .notEmpty().withMessage('El campo fecha no puede ir vacio'),
     body('bitacora_id')
         .isNumeric().withMessage('El id debe ser un número')
         .notEmpty().withMessage('El id de usuario no puede ir vacio'),
@@ -47,7 +47,7 @@ router.put('/update/:id',
     body('description')
         .notEmpty().withMessage('El nombre no puede ir vacio'),
     body('date')
-        .notEmpty().withMessage('El numero de boleta no puede ir vacio'),
+        .notEmpty().withMessage('El campo fecha no puede ir vacio'),
     body('bitacora_id')
         .notEmpty().withMessage('El id de usuario no puede ir vacio'),
     body('category_id')
